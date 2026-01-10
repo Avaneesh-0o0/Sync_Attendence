@@ -1,8 +1,5 @@
-
-    import 'package:supabase_flutter/supabase_flutter.dart';
-
-  
-   
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SupabaseService {
   static SupabaseService? _instance;
@@ -12,22 +9,18 @@ class SupabaseService {
   SupabaseService._internal();
 
   // 🔴 PUT YOUR REAL VALUES HERE
-  static const String supabaseUrl =
-      'https://rpyeyfzppjnakhbajgzn.supabase.co';
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
 
-  static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJweWV5ZnpwcGpuYWtoYmFqZ3puIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc1ODIyODcsImV4cCI6MjA4MzE1ODI4N30.9hd_D_CSR7NPmD8D9M10Q4HBzntiw6KSPhyXPO_k6L4';
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   /// Call this once in main()
   static Future<void> initialize() async {
+    await dotenv.load(fileName: ".env");
     if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
       throw Exception('Supabase URL or Anon Key is missing');
     }
 
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-    );
+    await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   }
 
   /// Access Supabase client anywhere
