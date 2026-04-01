@@ -1,119 +1,8 @@
-<<<<<<< HEAD
-# Flutter
-
-A modern Flutter-based mobile application utilizing the latest mobile development technologies and tools for building responsive cross-platform applications.
-
-## 📋 Prerequisites
-
-- Flutter SDK (^3.38.4)
-- Dart SDK
-- Android Studio / VS Code with Flutter extensions
-- Android SDK / Xcode (for iOS development)
-
-## 🛠️ Installation
-
-1. Install dependencies:
-```bash
-flutter pub get
-```
-
-2. Run the application:
-```bash
-flutter run
-```
-
-## 📁 Project Structure
-
-```
-flutter_app/
-├── android/            # Android-specific configuration
-├── ios/                # iOS-specific configuration
-├── lib/
-│   ├── core/           # Core utilities and services
-│   │   └── utils/      # Utility classes
-│   ├── presentation/   # UI screens and widgets
-│   │   └── splash_screen/ # Splash screen implementation
-│   ├── routes/         # Application routing
-│   ├── theme/          # Theme configuration
-│   ├── widgets/        # Reusable UI components
-│   └── main.dart       # Application entry point
-├── assets/             # Static assets (images, fonts, etc.)
-├── pubspec.yaml        # Project dependencies and configuration
-└── README.md           # Project documentation
-```
-
-## 🧩 Adding Routes
-
-To add new routes to the application, update the `lib/routes/app_routes.dart` file:
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:package_name/presentation/home_screen/home_screen.dart';
-
-class AppRoutes {
-  static const String initial = '/';
-  static const String home = '/home';
-
-  static Map<String, WidgetBuilder> routes = {
-    initial: (context) => const SplashScreen(),
-    home: (context) => const HomeScreen(),
-    // Add more routes as needed
-  }
-}
-```
-
-## 🎨 Theming
-
-This project includes a comprehensive theming system with both light and dark themes:
-
-```dart
-// Access the current theme
-ThemeData theme = Theme.of(context);
-
-// Use theme colors
-Color primaryColor = theme.colorScheme.primary;
-```
-
-The theme configuration includes:
-- Color schemes for light and dark modes
-- Typography styles
-- Button themes
-- Input decoration themes
-- Card and dialog themes
-
-## 📱 Responsive Design
-
-The app is built with responsive design using the Sizer package:
-
-```dart
-// Example of responsive sizing
-Container(
-  width: 50.w, // 50% of screen width
-  height: 20.h, // 20% of screen height
-  child: Text('Responsive Container'),
-)
-```
-## 📦 Deployment
-
-Build the application for production:
-
-```bash
-# For Android
-flutter build apk --release
-
-# For iOS
-flutter build ios --release
-```
-
-## 🙏 Acknowledgments
-- Powered by [Flutter](https://flutter.dev) & [Dart](https://dart.dev)
-- Styled with Material Design
-=======
 # AttendEase — Smart Attendance System
 
 AttendEase is a smart and secure attendance management system designed for colleges and educational institutions. It supports three attendance modes — **Bluetooth**, **QR**, and **Hybrid** — enabling fast, offline-first, and proxy-resistant attendance verification.
 
-The system is built with **Flutter** for the application layer and **Supabase** for backend authentication, data storage, and synchronization.
+Built with **Flutter** for the application layer and **Supabase** for backend authentication, data storage, and synchronization.
 
 ---
 
@@ -133,16 +22,13 @@ The system is built with **Flutter** for the application layer and **Supabase** 
 - **Offline-first Architecture**
   - Attendance stored locally when offline & synced later
 - **Teacher Dashboard**
-  - Start sessions
-  - Monitor attendance
-  - Manage classes & subjects
+  - Start sessions, monitor attendance, manage classes & subjects
 - **Student Panel**
-  - Mark attendance
-  - View attendance history
+  - Mark attendance, view attendance history
 
 ---
 
-## 🏛️ Attendance Modes (Spec)
+## 🏛️ Attendance Modes
 
 | Mode | Requires Internet | Secure Against Proxy | Notes |
 |------|------------------|----------------------|-------|
@@ -166,14 +52,12 @@ The system is built with **Flutter** for the application layer and **Supabase** 
 ### 👨‍🎓 Student
 - Login via Google
 - Scan QR / detect BLE beacon
-- Mark attendance
-- View history
+- Mark attendance & view history
 
 ### 👨‍🏫 Teacher
 - Login via Google
 - Manage classes & subjects
-- Start attendance sessions
-- End sessions and generate reports
+- Start/end attendance sessions and generate reports
 
 ---
 
@@ -188,31 +72,63 @@ The system is built with **Flutter** for the application layer and **Supabase** 
 ## 🔐 Security Model
 
 - Dynamic QR tokens (expires every 45 seconds)
-- BLE RSSI proximity check
+- BLE RSSI proximity check (3-meter radius)
 - Unique attendance constraint (1 student per session)
 - Role-based routing & DB filtering
 - College email-based authentication
 
 ---
 
-## 🗄️ Database Schema (Simplified)
-- users (id, email, role, name, avatar_url)
-- students (user_id, roll_no, department)
-- teachers (user_id, department)
-- classes (id, name, teacher_id)
-- sessions (id, class_id, teacher_id, mode, created_at, ended_at)
-- attendance (id, session_id, student_id, method, rssi, synced, marked_at)
-  
+## 🗄️ Database Schema
+
+```
+users        (id, email, role, name, avatar_url)
+students     (user_id, roll_no, department)
+teachers     (user_id, department)
+classes      (id, name, teacher_id)
+sessions     (id, class_id, teacher_id, mode, created_at, ended_at)
+attendance   (id, session_id, student_id, method, rssi, synced, marked_at)
+```
+
 ---
 
 ## 🔧 Tech Stack
 
-- Flutter (Dart)
-- Supabase (Auth + PostgreSQL)
-- Hive (Offline storage)
-- flutter_blue_plus (Bluetooth LE)
-- qr_flutter + mobile_scanner (QR system)
-- Google Sign-In
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Flutter (Dart) |
+| Backend | Supabase (Auth + PostgreSQL) |
+| Offline Storage | Hive |
+| Bluetooth | flutter_blue_plus |
+| QR | qr_flutter + mobile_scanner |
+| Auth | Google Sign-In |
+
+---
+
+## 🛠️ Installation
+
+1. Clone the repo and install dependencies:
+```bash
+flutter pub get
+```
+
+2. Run on a real Android device (BLE not supported in emulators):
+```bash
+flutter run
+```
+
+3. Build for release:
+```bash
+flutter build apk --release
+```
+
+---
+
+## 🧪 Testing Requirements
+
+- Must test on **real Android device** (BLE requires hardware)
+- Android 6.0+ for Bluetooth support
+- Camera permission required for QR mode
 
 ---
 
@@ -221,28 +137,14 @@ The system is built with **Flutter** for the application layer and **Supabase** 
 - Web dashboard for admins
 - Push notifications for attendance reminders
 - Exportable CSV/PDF attendance reports
-- iOS support (phase-2)
+- iOS support (Phase 2)
 - Bluetooth mesh optimization for large rooms
-
----
-
-## 🧪 Testing Requirements
-
-- Must test on **real Android device** (BLE not supported in emulators)
-- Bluetooth: requires Android 6.0+
-- Camera permission for QR mode
 
 ---
 
 ## 🏁 Status
 
-> 🚧 Work In Progress — actively developed
-
----
-
-## 📄 License
-
-MIT License (or choose your own)
+> 🚧 Actively in development
 
 ---
 
@@ -252,10 +154,13 @@ PRs and suggestions are welcome! Open an issue or fork the project to propose en
 
 ---
 
-## 🔗 Authors
+## 🔗 Author
 
-- Avaneesh — Flutter Dev / System Design
+**Avaneesh Malviya** — Flutter Dev / System Design  
+[GitHub](https://github.com/Avaneesh-0o0) | [LinkedIn](https://www.linkedin.com/in/avaneesh-malviya-7980b5296/)
 
->>>>>>> e8814f8d2c53ccf6bdacba814e2239c472e7eeb8
+---
 
+## 📄 License
 
+MIT License
