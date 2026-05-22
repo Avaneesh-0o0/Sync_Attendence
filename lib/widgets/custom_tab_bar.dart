@@ -173,8 +173,6 @@ class CustomTabBar extends StatelessWidget {
     required TabItem tab,
     required bool isSelected,
   }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     // Standard tab with text only
     if (variant == TabBarVariant.standard ||

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-
 import '../../../core/app_export.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
@@ -52,7 +51,7 @@ class _QrCodeDisplayWidgetState extends State<QrCodeDisplayWidget>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final progress = widget.remainingSeconds / 45.0;
+    final progress = widget.remainingSeconds / 30.0;
 
     return Container(
       width: double.infinity,
@@ -87,7 +86,10 @@ class _QrCodeDisplayWidgetState extends State<QrCodeDisplayWidget>
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
 
                 decoration: BoxDecoration(
                   color: progress > 0.3
@@ -107,15 +109,17 @@ class _QrCodeDisplayWidgetState extends State<QrCodeDisplayWidget>
                     ),
                     const SizedBox(width: 4),
 
-                      Text(
-                        widget.qrData.isEmpty ? '...' : '${widget.remainingSeconds}s',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: progress > 0.3
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.error,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    Text(
+                      widget.qrData.isEmpty
+                          ? '...'
+                          : '${widget.remainingSeconds}s',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: progress > 0.3
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.error,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -148,7 +152,8 @@ class _QrCodeDisplayWidgetState extends State<QrCodeDisplayWidget>
                           Text(
                             'Generating QR...',
                             style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant),
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       )

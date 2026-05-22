@@ -4,13 +4,11 @@ class SessionModel {
   final String teacherId;
   final DateTime startTime;
   final DateTime? endTime;
-  final String mode; // 'QR', 'Bluetooth', 'Manual'
+  final String mode; // 'QR', 'BLE', 'HYBRID'
   final bool isActive;
-  final String? qrCode; // Session specific implementation details if needed
+  final String? subject;
 
   // Joins (optional, populated if select includes them)
-  final String? subjectName;
-  final String? subjectCode;
   final String? className;
   final String? teacherName;
 
@@ -22,9 +20,7 @@ class SessionModel {
     this.endTime,
     required this.mode,
     required this.isActive,
-    this.qrCode,
-    this.subjectName,
-    this.subjectCode,
+    this.subject,
     this.className,
     this.teacherName,
   });
@@ -40,13 +36,10 @@ class SessionModel {
           : null,
       mode: json['mode'] as String? ?? 'QR',
       isActive: json['is_active'] as bool? ?? true,
-      qrCode: json['qr_code'] as String?,
-      subjectName: json['classes']?['name'] ?? json['subject_name'], 
-      subjectCode: json['classes']?['subject_code'] ?? json['subject_code'],
+      subject: json['subject'] as String?,
       className: json['classes']?['name'] ?? json['class_name'],
       teacherName:
-          json['teachers']?['users']?['name'] ??
-          json['teacher_name'], // Nested join helper
+          json['users']?['name'] ?? json['teacher_name'], // Nested join helper
     );
   }
 
@@ -59,7 +52,7 @@ class SessionModel {
       'end_time': endTime?.toIso8601String(),
       'mode': mode,
       'is_active': isActive,
-      'qr_code': qrCode,
+      'subject': subject,
     };
   }
 }

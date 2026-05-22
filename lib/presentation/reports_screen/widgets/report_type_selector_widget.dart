@@ -16,7 +16,7 @@ class ReportTypeSelectorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final reportTypes = ['Overview', 'Detailed', 'Low Attendance'];
+    final reportTypes = ['Overview', 'Detailed', 'Percentage Data'];
 
     return Container(
       height: 48,

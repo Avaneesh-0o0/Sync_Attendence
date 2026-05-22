@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-
 import '../../core/app_export.dart';
 import '../../widgets/custom_icon_widget.dart';
 import './widgets/advanced_settings_widget.dart';
 import './widgets/attendance_mode_selector_widget.dart';
 import './widgets/session_duration_picker_widget.dart';
 import '../../services/teacher_service.dart';
-
 
 /// Start Attendance Screen - Teacher session configuration interface
 /// Enables comprehensive attendance session setup with multiple modes
@@ -23,11 +21,12 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
   // Form state
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _classController = TextEditingController();
-  final TextEditingController _totalStudentsController = TextEditingController(text: '50');
+  final TextEditingController _totalStudentsController = TextEditingController(
+    text: '50',
+  );
   String? _selectedMode;
   int _selectedDuration = 60;
   List<Map<String, dynamic>> _existingClasses = [];
-
 
   // Advanced settings
   int _gracePeriod = 5;
@@ -40,7 +39,6 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
 
   @override
   void dispose() {
-
     _subjectController.dispose();
     _classController.dispose();
     _totalStudentsController.dispose();
@@ -61,15 +59,17 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
       });
 
       // Auto-fill from arguments if provided
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null) {
         if (args['subjectCode'] != null) {
           _subjectController.text = args['subjectCode'].toString();
         }
-        if (args['name'] != null) { // args['name'] is Class Name from dashboard
-           _classController.text = args['name'].toString();
-           // Trigger onClassChanged to auto-fill total students
-           _onClassChanged(args['name'].toString());
+        if (args['name'] != null) {
+          // args['name'] is Class Name from dashboard
+          _classController.text = args['name'].toString();
+          // Trigger onClassChanged to auto-fill total students
+          _onClassChanged(args['name'].toString());
         }
       }
     }
@@ -79,7 +79,7 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
     setState(() {});
     // Auto-fill total students if class exists (case-insensitive)
     final existing = _existingClasses.where(
-      (c) => c['name'].toString().toLowerCase() == value.toLowerCase()
+      (c) => c['name'].toString().toLowerCase() == value.toLowerCase(),
     );
     if (existing.isNotEmpty) {
       final total = existing.first['total_students'];
@@ -97,7 +97,6 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
         _selectedMode != null &&
         !_isCreatingSession;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +215,8 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                       hintText: 'e.g. CS101 or Algorithms',
                       prefixIcon: const Icon(Icons.book, size: 20),
                       filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -235,7 +235,8 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                       hintText: 'e.g. CS1 or 2nd Year Section B',
                       prefixIcon: const Icon(Icons.school, size: 20),
                       filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -256,7 +257,8 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                       hintText: 'e.g. 66',
                       prefixIcon: const Icon(Icons.groups_rounded, size: 20),
                       filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -365,13 +367,19 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                       color: theme.colorScheme.secondary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                        color: theme.colorScheme.secondary.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.info_outline, color: theme.colorScheme.secondary, size: 20),
+                        Icon(
+                          Icons.info_outline,
+                          color: theme.colorScheme.secondary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -424,7 +432,8 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
       // 1. Get or Create Class ID
       final subjectCode = _subjectController.text.trim();
       final className = _classController.text.trim();
-      final totalStudents = int.tryParse(_totalStudentsController.text.trim()) ?? 50;
+      final totalStudents =
+          int.tryParse(_totalStudentsController.text.trim()) ?? 50;
 
       final classId = await _teacherService.getOrCreateClass(
         subjectCode,
@@ -436,14 +445,13 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
         throw Exception("Failed to identify or create class.");
       }
 
-
-      // 2. Create Session in Supabase
+      // 2. Create Session in Supabase (throws on failure)
       final mode = _selectedMode ?? 'QR';
-      final sessionId = await _teacherService.createSession(classId, mode);
-
-      if (sessionId == null) {
-        throw Exception("Failed to create session in database.");
-      }
+      final sessionId = await _teacherService.createSession(
+        classId,
+        mode,
+        subjectCode,
+      );
 
       // 3. Navigate
       final sessionConfig = {
@@ -457,7 +465,6 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
         'proximitySensitivity': _proximitySensitivity,
         'startTime': DateTime.now().toIso8601String(),
       };
-
 
       if (mounted) {
         Navigator.pushReplacementNamed(
@@ -478,7 +485,6 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
       if (mounted) {
         _showErrorDialog('Error starting session', e.toString());
       }
-
     } finally {
       if (mounted) {
         setState(() {
@@ -508,7 +514,11 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.error_outline, color: theme.colorScheme.error, size: 24),
+              Icon(
+                Icons.error_outline,
+                color: theme.colorScheme.error,
+                size: 24,
+              ),
               const SizedBox(width: 12),
               Text(title),
             ],

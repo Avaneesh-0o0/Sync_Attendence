@@ -3,16 +3,14 @@ class AttendanceModel {
   final String sessionId;
   final String studentId;
   final DateTime markedAt;
-  final String status; // 'present', 'absent', 'late'
-  final String verificationMethod; // 'QR', 'Bluetooth'
+  final String? deviceId;
 
   AttendanceModel({
     required this.id,
     required this.sessionId,
     required this.studentId,
     required this.markedAt,
-    required this.status,
-    required this.verificationMethod,
+    this.deviceId,
   });
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json) {
@@ -21,8 +19,7 @@ class AttendanceModel {
       sessionId: json['session_id'] as String,
       studentId: json['student_id'] as String,
       markedAt: DateTime.parse(json['marked_at'] as String),
-      status: json['status'] as String? ?? 'present',
-      verificationMethod: json['verification_method'] as String? ?? 'QR',
+      deviceId: json['device_id'] as String?,
     );
   }
 
@@ -32,8 +29,7 @@ class AttendanceModel {
       'session_id': sessionId,
       'student_id': studentId,
       'marked_at': markedAt.toIso8601String(),
-      'status': status,
-      'verification_method': verificationMethod,
+      'device_id': deviceId,
     };
   }
 }

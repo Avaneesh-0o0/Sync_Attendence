@@ -67,7 +67,7 @@ class AttendanceHistoryListWidget extends StatelessWidget {
     final time = DateFormat('hh:mm a').format(record.markedAt);
     final subject = 'Class ${record.sessionId}';
     final teacher = 'Teacher';
-    final status = record.status;
+    final status = 'Present';
 
     final isPresent = status.toLowerCase() == 'present';
 

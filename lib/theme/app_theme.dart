@@ -6,65 +6,65 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   AppTheme._();
 
-  // Neon Theme Palette - Light Theme Colors
-  static const Color primaryLight = Color(0xFF00E5FF); // Neon cyan
-  static const Color primaryVariantLight = Color(0xFF00B8D4);
-  static const Color secondaryLight = Color(0xFF76FF03); // Neon green
-  static const Color secondaryVariantLight = Color(0xFF64DD17);
-  static const Color backgroundLight = Color(0xFF0A0E27); // Dark blue-black
-  static const Color surfaceLight = Color(0xFF1A1F3A); // Dark surface
-  static const Color errorLight = Color(0xFFFF1744); // Neon red
-  static const Color warningLight = Color(0xFFFFEA00); // Neon yellow
-  static const Color infoLight = Color(0xFF00E5FF); // Neon cyan
-  static const Color successLight = Color(0xFF76FF03); // Neon green
-  static const Color onPrimaryLight = Color(0xFF0A0E27);
-  static const Color onSecondaryLight = Color(0xFF0A0E27);
-  static const Color onBackgroundLight = Color(0xFFFFFFFF);
-  static const Color onSurfaceLight = Color(0xFFE0E0E0);
-  static const Color onErrorLight = Color(0xFF0A0E27);
-  static const Color accentPink = Color(0xFFFF006E); // Neon pink
-  static const Color accentPurple = Color(0xFFD500F9); // Neon purple
-  static const Color accentOrange = Color(0xFFFF6D00); // Neon orange
+  // Premium Modern Dark Theme - Light Mode (which we will map to dark)
+  static const Color primaryLight = Color(0xFF6366F1); // Indigo 500
+  static const Color primaryVariantLight = Color(0xFF4F46E5); // Indigo 600
+  static const Color secondaryLight = Color(0xFF10B981); // Emerald 500
+  static const Color secondaryVariantLight = Color(0xFF059669); // Emerald 600
+  static const Color backgroundLight = Color(0xFF0F172A); // Slate 900
+  static const Color surfaceLight = Color(0xFF1E293B); // Slate 800
+  static const Color errorLight = Color(0xFFEF4444); // Red 500
+  static const Color warningLight = Color(0xFFF59E0B); // Amber 500
+  static const Color infoLight = Color(0xFF3B82F6); // Blue 500
+  static const Color successLight = Color(0xFF10B981); // Emerald 500
+  static const Color onPrimaryLight = Color(0xFFFFFFFF);
+  static const Color onSecondaryLight = Color(0xFFFFFFFF);
+  static const Color onBackgroundLight = Color(0xFFF8FAFC); // Slate 50
+  static const Color onSurfaceLight = Color(0xFFF1F5F9); // Slate 100
+  static const Color onErrorLight = Color(0xFFFFFFFF);
+  static const Color accentPink = Color(0xFFEC4899); // Pink 500
+  static const Color accentPurple = Color(0xFF8B5CF6); // Violet 500
+  static const Color accentOrange = Color(0xFFF97316); // Orange 500
 
-  // Neon Theme Palette - Dark Theme Colors (same as light for neon effect)
-  static const Color primaryDark = Color(0xFF00E5FF);
-  static const Color primaryVariantDark = Color(0xFF00B8D4);
-  static const Color secondaryDark = Color(0xFF76FF03);
-  static const Color secondaryVariantDark = Color(0xFF64DD17);
-  static const Color backgroundDark = Color(0xFF0A0E27);
-  static const Color surfaceDark = Color(0xFF1A1F3A);
-  static const Color errorDark = Color(0xFFFF1744);
-  static const Color warningDark = Color(0xFFFFEA00);
-  static const Color infoDark = Color(0xFF00E5FF);
-  static const Color successDark = Color(0xFF76FF03);
-  static const Color onPrimaryDark = Color(0xFF0A0E27);
-  static const Color onSecondaryDark = Color(0xFF0A0E27);
-  static const Color onBackgroundDark = Color(0xFFFFFFFF);
-  static const Color onSurfaceDark = Color(0xFFE0E0E0);
-  static const Color onErrorDark = Color(0xFF0A0E27);
+  // Premium Modern Dark Theme - Dark Mode Colors
+  static const Color primaryDark = primaryLight;
+  static const Color primaryVariantDark = primaryVariantLight;
+  static const Color secondaryDark = secondaryLight;
+  static const Color secondaryVariantDark = secondaryVariantLight;
+  static const Color backgroundDark = backgroundLight;
+  static const Color surfaceDark = surfaceLight;
+  static const Color errorDark = errorLight;
+  static const Color warningDark = warningLight;
+  static const Color infoDark = infoLight;
+  static const Color successDark = successLight;
+  static const Color onPrimaryDark = onPrimaryLight;
+  static const Color onSecondaryDark = onSecondaryLight;
+  static const Color onBackgroundDark = onBackgroundLight;
+  static const Color onSurfaceDark = onSurfaceLight;
+  static const Color onErrorDark = onErrorLight;
 
   // Card and dialog colors
-  static const Color cardLight = Color(0xFF1A1F3A);
-  static const Color cardDark = Color(0xFF1A1F3A);
-  static const Color dialogLight = Color(0xFF1A1F3A);
-  static const Color dialogDark = Color(0xFF1A1F3A);
+  static const Color cardLight = surfaceLight;
+  static const Color cardDark = surfaceDark;
+  static const Color dialogLight = surfaceLight;
+  static const Color dialogDark = surfaceDark;
 
-  // Shadow colors - Neon glow effects
-  static const Color shadowLight = Color(0x4000E5FF);
-  static const Color shadowDark = Color(0x4000E5FF);
+  // Shadow colors
+  static const Color shadowLight = Color(0x33000000);
+  static const Color shadowDark = Color(0x33000000);
 
   // Divider and border colors
-  static const Color dividerLight = Color(0xFF00E5FF);
-  static const Color dividerDark = Color(0xFF00E5FF);
+  static const Color dividerLight = Color(0xFF334155); // Slate 700
+  static const Color dividerDark = Color(0xFF334155);
 
-  // Text colors with neon aesthetics
-  static const Color textHighEmphasisLight = Color(0xFFFFFFFF);
-  static const Color textMediumEmphasisLight = Color(0xFFB0B0B0);
-  static const Color textDisabledLight = Color(0xFF6E6E6E);
+  // Text colors
+  static const Color textHighEmphasisLight = Color(0xFFF8FAFC);
+  static const Color textMediumEmphasisLight = Color(0xFF94A3B8); // Slate 400
+  static const Color textDisabledLight = Color(0xFF475569); // Slate 600
 
-  static const Color textHighEmphasisDark = Color(0xFFFFFFFF);
-  static const Color textMediumEmphasisDark = Color(0xFFB0B0B0);
-  static const Color textDisabledDark = Color(0xFF6E6E6E);
+  static const Color textHighEmphasisDark = Color(0xFFF8FAFC);
+  static const Color textMediumEmphasisDark = Color(0xFF94A3B8);
+  static const Color textDisabledDark = Color(0xFF475569);
 
   /// Neon theme optimized for modern aesthetics
   static ThemeData lightTheme = ThemeData(

@@ -78,5 +78,15 @@ class AuthRepository {
       rethrow;
     }
   }
-}
 
+  // Update User Role in 'users' table
+  Future<void> updateUserRole(String userId, String role) async {
+    try {
+      await _supabase.from('users').update({'role': role}).eq('id', userId);
+    } catch (e, stack) {
+      print('AU_REPO: Error updating user role: $e');
+      print(stack);
+      rethrow;
+    }
+  }
+}

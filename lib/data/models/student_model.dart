@@ -1,35 +1,33 @@
 class StudentModel {
-  final String id;
   final String userId; // Link to auth.users or users table
-  final String rollNumber;
-  final String? department;
-  final String? batch;
+  final String rollNo;
+  final String? classId;
+  final DateTime createdAt;
 
   StudentModel({
-    required this.id,
     required this.userId,
-    required this.rollNumber,
-    this.department,
-    this.batch,
+    required this.rollNo,
+    this.classId,
+    required this.createdAt,
   });
 
   factory StudentModel.fromJson(Map<String, dynamic> json) {
     return StudentModel(
-      id: json['id'] as String,
       userId: json['user_id'] as String,
-      rollNumber: json['roll_number'] as String,
-      department: json['department'] as String?,
-      batch: json['batch'] as String?,
+      rollNo: json['roll_no'] as String,
+      classId: json['class_id'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'user_id': userId,
-      'roll_number': rollNumber,
-      'department': department,
-      'batch': batch,
+      'roll_no': rollNo,
+      'class_id': classId,
+      'created_at': createdAt.toIso8601String(),
     };
   }
 }

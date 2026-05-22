@@ -30,23 +30,14 @@ class AuthService {
     String name,
     String role,
   ) async {
-    final response = await _repository.signUpWithEmail(
+    await _repository.signUpWithEmail(
       email,
       password,
       data: {'name': name, 'role': role},
     );
 
-    final user = response.user;
-    if (user != null) {
-      final newUser = UserModel(
-        id: user.id,
-        email: email,
-        role: role,
-        name: name,
-        createdAt: DateTime.now(),
-      );
-      await _repository.createUserProfile(newUser);
-    }
+    // Profile creation is now automatically handled by a PostgreSQL
+    // database trigger (`on_auth_user_created`) in Supabase.
   }
 
   /// Sign in with Google
@@ -123,11 +114,24 @@ class AuthService {
     return metadataRole;
   }
 
-
   /// Get Full User Profile
   Future<UserModel?> getUserProfile() async {
     final user = currentUser;
     if (user == null) return null;
     return await _repository.getUserProfile(user.id);
+  }
+
+  /// Update user role (e.g. for Google Sign In users who need to pick a role)
+  Future<void> updateUserRole(String role) async {
+    final user = currentUser;
+    if (user == null) return;
+    await _repository.updateUserRole(user.id, role);
+
+    // Attempt to update the user metadata in auth too
+    try {
+      await _supabase.auth.updateUser(UserAttributes(data: {'role': role}));
+    } catch (_) {
+      // It's okay if this fails, the db holds the main truth now
+    }
   }
 }

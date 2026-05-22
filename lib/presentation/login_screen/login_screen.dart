@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/custom_icon_widget.dart';
 import '../../services/auth_service.dart';
 import '../../routes/app_routes.dart';
+import 'widgets/role_selection_dialog.dart';
 
 /// Login Screen for AttendEase
 /// Implements Google Sign-In authentication with college email validation
@@ -84,6 +85,47 @@ class _LoginScreenState extends State<LoginScreen>
           _emailController.text.trim(),
           _passwordController.text.trim(),
         );
+
+        if (!mounted) return;
+        final role = await authService.getUserRole();
+
+        if (!mounted) return;
+        print('LOGIN: Navigating with role: $role');
+
+        if (role == 'teacher') {
+          Navigator.pushReplacementNamed(context, AppRoutes.teacherDashboard);
+        } else if (role == 'student') {
+          // Check if profile is complete
+          final supabase = Supabase.instance.client;
+          final user = supabase.auth.currentUser;
+          if (user != null) {
+            final studentRecord = await supabase
+                .from('students')
+                .select()
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (studentRecord != null &&
+                studentRecord['roll_no'] != null &&
+                studentRecord['roll_no'].toString().isNotEmpty) {
+              Navigator.pushReplacementNamed(
+                  context, AppRoutes.studentAttendance);
+            } else {
+              print('LOGIN: Profile incomplete, redirecting to setup');
+              Navigator.pushReplacementNamed(
+                  context, AppRoutes.studentProfileSetup);
+            }
+          } else {
+            Navigator.pushReplacementNamed(
+                context, AppRoutes.studentProfileSetup);
+          }
+        } else {
+          print('LOGIN: Role unknown, redirecting to profile setup');
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.studentProfileSetup,
+          );
+        }
       } else {
         await authService.signUpWithEmail(
           _emailController.text.trim(),
@@ -91,36 +133,43 @@ class _LoginScreenState extends State<LoginScreen>
           _nameController.text.trim(),
           _selectedRole,
         );
+
+        if (!mounted) return;
+
+        // Custom message for email verification
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.mark_email_unread_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                const Text('Verify Your Email'),
+              ],
+            ),
+            content: const Text(
+              'A verification link has been sent to your email. Please verify your email before signing in.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+
+        setState(() {
+          _isLoginMode = true; // Switch back to login mode
+          _passwordController.clear(); // Clear password for security
+        });
       }
-
-      if (!mounted) return;
-
-      // After successful auth, navigate based on role
-      // For new signups, use _selectedRole if fetch fails
-      // For existing logins, MUST fetch from DB
-      String? role;
-      if (!_isLoginMode) {
-        // Sign up mode: we know the role they just picked
-        role = _selectedRole;
-      } else {
-        // Login mode: fetch from DB
-        role = await authService.getUserRole();
-      }
-
-      if (!mounted) return;
-
-      print('LOGIN: Navigating with role: $role');
-
-      if (role == 'teacher') {
-        Navigator.pushReplacementNamed(context, AppRoutes.teacherDashboard);
-      } else if (role == 'student') {
-        Navigator.pushReplacementNamed(context, AppRoutes.studentAttendance);
-      } else {
-        // If role is still missing after login, it might be a legacy user or DB issue
-        print('LOGIN: Role unknown, redirecting to profile setup');
-        Navigator.pushReplacementNamed(context, AppRoutes.studentProfileSetup);
-      }
-
     } catch (e) {
       if (!mounted) return;
       String errorMessage = 'An unexpected error occurred';
@@ -130,17 +179,17 @@ class _LoginScreenState extends State<LoginScreen>
         errorMessage = e.toString().replaceAll('Exception:', '').trim();
       }
 
+      // Check for 'already registered'
+      if (errorMessage.toLowerCase().contains('already registered')) {
+        errorMessage =
+            'An account with this email already exists. Please sign in instead.';
+      }
+
       _showErrorDialog(
         _isLoginMode ? 'Login Failed' : 'Sign Up Failed',
         errorMessage,
       );
-
-      // Add special tip for email confirmation error
-      if (errorMessage.toLowerCase().contains('email not confirmed')) {
-        print('LOGIN_ERROR: Email confirmation required. Tip: Disable in Supabase Dashboard -> Auth -> Providers -> Email -> Confirm email');
-      }
     } finally {
-
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -164,27 +213,58 @@ class _LoginScreenState extends State<LoginScreen>
         return;
       }
 
-      // Optional: Validation
-      // if (!_validateEducationalEmail(email)) {
-      //   await authService.signOut();
-      //   if (!mounted) return;
-      //    _showErrorDialog('Invalid Email', 'Please use institutional email.');
-      //    setState(() => _isLoading = false);
-      //    return;
-      // }
-
       // Get Role
-      final role = await authService.getUserRole();
+      String? role = await authService.getUserRole();
+
+      if (!mounted) return;
+
+      // Ask for role if not set (first-time Google Sign In)
+      if (role == null) {
+        final selectedRole = await showDialog<String>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const RoleSelectionDialog(),
+        );
+
+        if (selectedRole != null && mounted) {
+          await authService.updateUserRole(selectedRole);
+          role = selectedRole;
+        } else {
+          // If they dismissed the dialog (somehow) or failed, fall back
+          role = 'student';
+          await authService.updateUserRole(role);
+        }
+      }
 
       if (!mounted) return;
 
       if (role == 'teacher') {
         Navigator.pushReplacementNamed(context, AppRoutes.teacherDashboard);
-      } else if (role == 'student') {
-        Navigator.pushReplacementNamed(context, AppRoutes.studentAttendance);
       } else {
-        // Default to student profile setup if role is missing or new user
-        Navigator.pushReplacementNamed(context, AppRoutes.studentProfileSetup);
+        // Check if profile is complete
+        final supabase = Supabase.instance.client;
+        final user = supabase.auth.currentUser;
+        if (user != null) {
+          final studentRecord = await supabase
+              .from('students')
+              .select()
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+          if (studentRecord != null &&
+              studentRecord['roll_no'] != null &&
+              studentRecord['roll_no'].toString().isNotEmpty) {
+            Navigator.pushReplacementNamed(
+                context, AppRoutes.studentAttendance);
+          } else {
+            print('LOGIN: Profile incomplete, redirecting to setup');
+            Navigator.pushReplacementNamed(
+                context, AppRoutes.studentProfileSetup);
+          }
+        } else {
+          Navigator.pushReplacementNamed(
+              context, AppRoutes.studentProfileSetup);
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -246,7 +326,7 @@ class _LoginScreenState extends State<LoginScreen>
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF0A0E27), Color(0xFF1A1F3A), Color(0xFF0A0E27)],
+              colors: [theme.scaffoldBackgroundColor, colorScheme.surface, theme.scaffoldBackgroundColor],
             ),
           ),
           child: SafeArea(
@@ -525,7 +605,26 @@ class _LoginScreenState extends State<LoginScreen>
             colorScheme: colorScheme,
             validator: (val) {
               if (val == null || val.isEmpty) return 'Password is required';
-              if (val.length < 6) return 'Min 6 characters';
+              if (_isLoginMode) {
+                if (val.length < 6) {
+                  return 'Password must be at least 6 characters';
+                }
+              } else {
+                // Password strength for Sign Up
+                if (val.length < 8) return 'Minimum 8 characters required';
+                if (!RegExp(r'(?=.*[a-z])').hasMatch(val)) {
+                  return 'Must contain a lowercase letter';
+                }
+                if (!RegExp(r'(?=.*[A-Z])').hasMatch(val)) {
+                  return 'Must contain an uppercase letter';
+                }
+                if (!RegExp(r'(?=.*\d)').hasMatch(val)) {
+                  return 'Must contain a number';
+                }
+                if (!RegExp(r'(?=.*[\W_])').hasMatch(val)) {
+                  return 'Must contain a special character';
+                }
+              }
               return null;
             },
             autofillHints: const [AutofillHints.password],

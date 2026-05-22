@@ -28,25 +28,25 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
   Timer? _timer;
   int _elapsedSeconds = 0;
   // Use a stream or periodic timer to update UI, but rely on Wall Clock time for logic
-  int _qrRemainingSeconds = 45;
+  int _qrRemainingSeconds = 30;
   String _qrToken = '';
   // Track the current window ID to avoid regenerating token for the same window repeatedly if not needed
   int _lastWindowId = -1;
+  final String _qrSecret = 'attendix_secret_key_2026';
   final TeacherService _teacherService = TeacherService();
   Stream<List<Map<String, dynamic>>>? _attendanceStream;
-  
+
   // Bluetooth
   final FlutterBlePeripheral _blePeripheral = FlutterBlePeripheral();
   bool _isBroadcasting = false;
   bool _isPaused = false;
-  
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _startTimer();
-    
+
     // Initialize attendance stream once context is available (in didChangeDependencies)
   }
 
@@ -54,27 +54,28 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_attendanceStream == null) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       final sessionId = args?['sessionId'];
       if (sessionId != null) {
         _attendanceStream = _teacherService.getAttendanceStream(sessionId);
         _generateQrToken(sessionId);
         if (_shouldBroadcast(args)) {
-           _startBluetoothAdvertising(sessionId);
+          _startBluetoothAdvertising(sessionId);
         }
       }
     }
   }
 
   bool _shouldBroadcast(Map<String, dynamic>? args) {
-     final mode = args?['mode'];
-     return mode == 'Bluetooth' || mode == 'Hybrid';
+    final mode = args?['mode'];
+    return mode == 'Bluetooth' || mode == 'Hybrid';
   }
 
   Future<void> _startBluetoothAdvertising(String sessionId) async {
     if (kIsWeb) {
       debugPrint("Bluetooth Advertising is not supported on Web.");
-      return; 
+      return;
     }
 
     // 1. Ensure Bluetooth is ON
@@ -84,18 +85,26 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
           await FlutterBluePlus.turnOn();
         } catch (e) {
           debugPrint("Failed to turn on Bluetooth: $e");
-           if (mounted) {
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please turn on Bluetooth to broadcast attendance.')),
+              const SnackBar(
+                content: Text(
+                  'Please turn on Bluetooth to broadcast attendance.',
+                ),
+              ),
             );
           }
           return;
         }
       } else {
         if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please turn on Bluetooth to broadcast attendance.')),
-            );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Please turn on Bluetooth to broadcast attendance.',
+              ),
+            ),
+          );
         }
         return;
       }
@@ -108,73 +117,76 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
           .first
           .timeout(const Duration(seconds: 5));
     } catch (e) {
-       // Timeout waiting for BT
-       return;
+      // Timeout waiting for BT
+      return;
     }
 
-    // Basic formatting for UUID (ensure it fits BLE specs, usually 128-bit or 16-bit)
-    // For simplicity, we are using a fixed Service UUID for the app and putting sessionId in data if possible,
-    // or just advertising the presence. 
-    // REAL WORLD: You'd want a proper 128-bit UUID generation strategy.
-    // For now, let's use a hashed version of sessionId or a fixed app UUID.
+    // Due to BLE payload limits (31 bytes), we cannot always fit a 128-bit custom Service UUID + Local Name.
+    // We broadcast the Session ID via the Local Name with an 'ATX:' prefix.
+    // The student app scans for ANY device and filters by the 'ATX:' prefix.
+    final String serviceUuid = '0000FEAA-0000-1000-8000-00805F9B34FB';
     
-    // Using a fixed UUID for Attendix Service
-    const String serviceUuid = "bf27730d-860a-4e09-889c-2d8b6a9e0fe7"; 
-    
-    // We can also include part of the session ID in manufacturer data or local name
-    
+    // Shorten Session ID to first 8 chars — UUIDs are 36 chars total.
+    // 'ATX:' prefix lets student app filter it easily.
+    final localName = "ATX:${sessionId.substring(0, 8)}";
+    debugPrint('BLE_BROADCAST: Starting advertising with localName=$localName, serviceUuid=$serviceUuid');
+
     final AdvertiseData advertiseData = AdvertiseData(
       serviceUuid: serviceUuid,
-      localName: "Attendix-$sessionId", 
-      includeDeviceName: false,
+      localName: localName,
+      includeDeviceName: true, // MUST be true to broadcast localName
     );
 
     final AdvertiseSettings advertiseSettings = AdvertiseSettings(
-      advertiseMode: AdvertiseMode.advertiseModeBalanced,
-      txPowerLevel: AdvertiseTxPower.advertiseTxPowerMedium,
-      connectable: false, 
-      timeout: 0, 
+      advertiseMode: AdvertiseMode.advertiseModeLowLatency, // Fastest discovery
+      txPowerLevel: AdvertiseTxPower.advertiseTxPowerHigh, // Maximum range
+      connectable: false,
+      timeout: 0,
     );
 
     try {
-      await _blePeripheral.start(advertiseData: advertiseData, advertiseSettings: advertiseSettings);
-       if (mounted) {
+      await _blePeripheral.start(
+        advertiseData: advertiseData,
+        advertiseSettings: advertiseSettings,
+      );
+      debugPrint('BLE_BROADCAST: Advertising started successfully');
+      if (mounted) {
         setState(() {
           _isBroadcasting = true;
         });
       }
     } catch (e) {
-      debugPrint("Bluetooth Advertising Error: $e");
+      debugPrint("BLE_BROADCAST: Advertising Error: $e");
     }
   }
 
-
-
   void _generateQrToken(String sessionId) {
     if (sessionId.isEmpty) return;
-    
-    // Time-based windowing (45 seconds)
+
+    // Time-based windowing (30 seconds)
     final now = DateTime.now();
-    final windowSize = 45; // seconds
+    final windowSize = 30; // seconds
     final currentWindowId = now.millisecondsSinceEpoch ~/ (windowSize * 1000);
 
     // Only regenerate if we entered a new window
     if (currentWindowId != _lastWindowId) {
-       _lastWindowId = currentWindowId;
-       
-       final bytes = utf8.encode('$sessionId:$currentWindowId');
-       final digest = sha256.convert(bytes);
-       
-       // Calculate remaining time in this window
-       final secondsInCurrentWindow = (now.millisecondsSinceEpoch ~/ 1000) % windowSize;
-       final remaining = windowSize - secondsInCurrentWindow;
+      _lastWindowId = currentWindowId;
 
-       if (mounted) {
+      final bytes = utf8.encode('$sessionId$currentWindowId$_qrSecret');
+      final digest = sha256.convert(bytes);
+      final hashStr = digest.toString().substring(0, 8);
+
+      // Calculate remaining time in this window
+      final secondsInCurrentWindow =
+          (now.millisecondsSinceEpoch ~/ 1000) % windowSize;
+      final remaining = windowSize - secondsInCurrentWindow;
+
+      if (mounted) {
         setState(() {
-          _qrToken = 'ATTENDIX_QR:$sessionId:${digest.toString().substring(0, 8)}';
+          _qrToken = 'ATTENDIX_QR:$sessionId:$currentWindowId:$hashStr';
           _qrRemainingSeconds = remaining;
         });
-       }
+      }
     }
   }
 
@@ -183,20 +195,25 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
       if (mounted && !_isPaused) {
         setState(() {
           _elapsedSeconds++;
-          
+
           // Update QR Timer based on System Clock to prevent drift
-          final windowSize = 45;
+          final windowSize = 30;
           final now = DateTime.now();
-          final secondsInCurrentWindow = (now.millisecondsSinceEpoch ~/ 1000) % windowSize;
+          final secondsInCurrentWindow =
+              (now.millisecondsSinceEpoch ~/ 1000) % windowSize;
           _qrRemainingSeconds = windowSize - secondsInCurrentWindow;
-          
-          // Regenerate token if we just flipped to a new window (remaining == 45 or close to it)
+
+          // Regenerate token if we just flipped to a new window (remaining == 30 or close to it)
           // Or if we haven't generated one yet
-          if (_qrRemainingSeconds == windowSize || _qrRemainingSeconds <= 1 || _qrToken.isEmpty) {
-             final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-             if (args?['sessionId'] != null) {
-               _generateQrToken(args!['sessionId']);
-             }
+          if (_qrRemainingSeconds == windowSize ||
+              _qrRemainingSeconds <= 1 ||
+              _qrToken.isEmpty) {
+            final args =
+                ModalRoute.of(context)?.settings.arguments
+                    as Map<String, dynamic>?;
+            if (args?['sessionId'] != null) {
+              _generateQrToken(args!['sessionId']);
+            }
           }
         });
       }
@@ -205,13 +222,17 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
     // Monitor Bluetooth State Changes
     if (!kIsWeb) {
       FlutterBluePlus.adapterState.listen((state) {
-        if (state == BluetoothAdapterState.on && !_isBroadcasting && !_isPaused) {
-             final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-             if (_shouldBroadcast(args)) {
-                _startBluetoothAdvertising(args!['sessionId']);
-             }
+        if (state == BluetoothAdapterState.on &&
+            !_isBroadcasting &&
+            !_isPaused) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          if (_shouldBroadcast(args)) {
+            _startBluetoothAdvertising(args!['sessionId']);
+          }
         } else if (state == BluetoothAdapterState.off) {
-           setState(() => _isBroadcasting = false);
+          setState(() => _isBroadcasting = false);
         }
       });
     }
@@ -234,23 +255,21 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
     final subject = args?['subject'] ?? 'Subject Not Found';
     final className = (args?['classes'] as List?)?.first ?? 'Class Not Found';
     final mode = args?['mode'] ?? 'QR';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: CustomAppBar(
-        title: 'Live Attendance',
-        centerTitle: true,
-      ),
+      appBar: CustomAppBar(title: 'Live Attendance', centerTitle: true),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _attendanceStream,
         builder: (context, snapshot) {
           final attendanceList = snapshot.data ?? [];
-          
+
           final List<Map<String, dynamic>> students = attendanceList.map((a) {
             return {
               'name': a['student_name'] ?? 'Student',
@@ -264,7 +283,7 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
           return NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) {
               return [
-                 SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: SessionHeaderWidget(
                     subject: subject,
                     className: className,
@@ -275,7 +294,7 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                     child: Hero(
+                    child: Hero(
                       tag: 'attendance_counter',
                       child: AttendanceCounterWidget(
                         presentCount: students.length,
@@ -284,7 +303,7 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
                     ),
                   ),
                 ),
-                 SliverPersistentHeader(
+                SliverPersistentHeader(
                   delegate: _SliverAppBarDelegate(
                     TabBar(
                       controller: _tabController,
@@ -314,12 +333,14 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                           child: QrCodeDisplayWidget(
-                            qrData: _isPaused ? 'SESSION PAUSED' : (_qrToken.isEmpty ? 'Loading...' : _qrToken),
+                            qrData: _isPaused
+                                ? 'SESSION PAUSED'
+                                : (_qrToken.isEmpty ? 'Loading...' : _qrToken),
                             remainingSeconds: _qrRemainingSeconds,
                             onRefresh: () {
                               if (!_isPaused && args?['sessionId'] != null) {
+                                _lastWindowId = -1; // Force regen
                                 _generateQrToken(args!['sessionId']);
-                                setState(() => _qrRemainingSeconds = 45);
                               }
                             },
                           ),
@@ -329,42 +350,62 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
                       // Show if mode matches, regardless of platform (show warning if web/desktop)
                       if (mode == 'Bluetooth' || mode == 'Hybrid')
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                               if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS))
+                              if (kIsWeb ||
+                                  (!Platform.isAndroid && !Platform.isIOS))
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: Colors.orange.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+                                    border: Border.all(
+                                      color: Colors.orange.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
                                   ),
                                   margin: const EdgeInsets.only(bottom: 8),
                                   child: Row(
                                     children: [
-                                       const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                                       const SizedBox(width: 12),
-                                       Expanded(
-                                         child: Text(
-                                           'Bluetooth broadcasting is optimized for Mobile (Android/iOS). It may not work on this device.',
-                                            style: theme.textTheme.bodySmall?.copyWith(color: Colors.orange[800]),
-                                         ),
-                                       )
+                                      const Icon(
+                                        Icons.warning_amber_rounded,
+                                        color: Colors.orange,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          'Bluetooth broadcasting is optimized for Mobile (Android/iOS). It may not work on this device.',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: Colors.orange[800],
+                                              ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                BluetoothStatusWidget(
-                                  isBroadcasting: _isBroadcasting,
-                                  connectedDevices: students.where((s) => s['verificationMethod'] == 'Bluetooth').length,
-                                ),
+                              BluetoothStatusWidget(
+                                isBroadcasting: _isBroadcasting,
+                                connectedDevices: students
+                                    .where(
+                                      (s) =>
+                                          s['verificationMethod'] ==
+                                          'Bluetooth',
+                                    )
+                                    .length,
+                              ),
                             ],
                           ),
                         ),
 
                       const SizedBox(height: 24),
-                      
+
                       // Session Controls
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -376,7 +417,9 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
                           },
                           onExtendTime: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Session time extended!')),
+                              const SnackBar(
+                                content: Text('Session time extended!'),
+                              ),
                             );
                           },
                         ),
@@ -384,12 +427,9 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
                     ],
                   ),
                 ),
-                
+
                 // Student List Tab
-                StudentListWidget(
-                  students: students,
-                  onRefresh: () {},
-                ),
+                StudentListWidget(students: students, onRefresh: () {}),
               ],
             ),
           );
@@ -412,21 +452,23 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
     setState(() {
       _isPaused = !_isPaused;
     });
-    
+
     if (_isPaused) {
       // Pause Bluetooth if active
-       if (_isBroadcasting) {
-         await _blePeripheral.stop();
-         setState(() => _isBroadcasting = false);
-       }
+      if (_isBroadcasting) {
+        await _blePeripheral.stop();
+        setState(() => _isBroadcasting = false);
+      }
     } else {
       // Resume - restart Bluetooth if needed
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (_shouldBroadcast(args)) {
-         _startBluetoothAdvertising(args!['sessionId']);
+        _startBluetoothAdvertising(args!['sessionId']);
       }
       // Force QR refresh
       if (args?['sessionId'] != null) {
+        _lastWindowId = -1;
         _generateQrToken(args!['sessionId']);
       }
     }
@@ -437,7 +479,9 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('End Attendance Session?'),
-        content: const Text('This will finalize the attendance for all students and save the report.'),
+        content: const Text(
+          'This will finalize the attendance for all students and save the report.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -450,24 +494,29 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
                 if (!kIsWeb) {
                   await _blePeripheral.stop();
                 }
-                
+
                 if (sessionId != null) {
                   await _teacherService.endSession(sessionId);
                 }
-                
+
                 if (context.mounted) {
                   // Pop the dialog
-                  Navigator.of(context).pop(); 
+                  Navigator.of(context).pop();
                   // Navigate back to success/dashboard
-                  Navigator.of(context).pushNamedAndRemoveUntil('/teacher-dashboard', (route) => false);
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/teacher-dashboard',
+                    (route) => false,
+                  );
                 }
               } catch (e) {
                 print("Error ending session: $e");
                 if (context.mounted) {
-                   Navigator.of(context).pop(); // Close dialog on error too? Or show error
-                   ScaffoldMessenger.of(context).showSnackBar(
-                     SnackBar(content: Text('Error ending session: $e'))
-                   );
+                  Navigator.of(
+                    context,
+                  ).pop(); // Close dialog on error too? Or show error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error ending session: $e')),
+                  );
                 }
               }
             },
@@ -494,9 +543,15 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
-      color: Theme.of(context).scaffoldBackgroundColor, // Ensure background opacity
+      color: Theme.of(
+        context,
+      ).scaffoldBackgroundColor, // Ensure background opacity
       child: _tabBar,
     );
   }

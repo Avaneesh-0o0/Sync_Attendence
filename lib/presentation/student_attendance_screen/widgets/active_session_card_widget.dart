@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 import '../../../core/app_export.dart';
 import '../../../widgets/custom_icon_widget.dart';
 import '../../../data/models/session_model.dart';
@@ -72,7 +71,7 @@ class ActiveSessionCardWidget extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           if (onManualQR != null || onManualBle != null) ...[
             const SizedBox(height: 24),
             Row(
@@ -80,7 +79,11 @@ class ActiveSessionCardWidget extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: onManualQR,
-                    icon: Icon(Icons.qr_code_scanner, size: 18, color: theme.colorScheme.primary),
+                    icon: Icon(
+                      Icons.qr_code_scanner,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
                     label: const Text('Scan QR'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -92,11 +95,15 @@ class ActiveSessionCardWidget extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: onManualBle,
-                    icon: Icon(Icons.bluetooth, size: 18, color: theme.colorScheme.primary),
+                    icon: Icon(
+                      Icons.bluetooth,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
                     label: const Text('Bluetooth'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                       side: BorderSide(color: theme.colorScheme.primary),
+                      side: BorderSide(color: theme.colorScheme.primary),
                     ),
                   ),
                 ),
@@ -109,7 +116,7 @@ class ActiveSessionCardWidget extends StatelessWidget {
   }
 
   Widget _buildActiveSessionCard(BuildContext context, ThemeData theme) {
-    final subject = activeSession!.subjectName ?? 'Unknown Subject';
+    final subject = activeSession!.subject ?? 'Unknown Subject';
     final teacher = activeSession!.teacherName ?? 'Unknown Teacher';
 
     // Calculate time remaining or show simplified time
@@ -163,7 +170,6 @@ class ActiveSessionCardWidget extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -178,7 +184,6 @@ class ActiveSessionCardWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Row(
-
                       children: [
                         CustomIconWidget(
                           iconName: 'person',
@@ -187,7 +192,6 @@ class ActiveSessionCardWidget extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Expanded(
-
                           child: Text(
                             teacher,
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -204,7 +208,10 @@ class ActiveSessionCardWidget extends StatelessWidget {
               ),
               if (isMarked)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
 
                   decoration: BoxDecoration(
                     color: theme.colorScheme.secondary.withValues(alpha: 0.2),
@@ -220,7 +227,6 @@ class ActiveSessionCardWidget extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-
                         'Present',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.secondary,
@@ -234,7 +240,6 @@ class ActiveSessionCardWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Divider(
-
             color: theme.colorScheme.outline.withValues(alpha: 0.2),
             height: 1,
           ),
@@ -296,7 +301,6 @@ class ActiveSessionCardWidget extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Column(
-
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(

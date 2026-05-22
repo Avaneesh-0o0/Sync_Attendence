@@ -7,7 +7,7 @@ import './widgets/attendance_chart_widget.dart';
 import './widgets/date_range_selector_widget.dart';
 import './widgets/detailed_report_widget.dart';
 import './widgets/export_button_widget.dart';
-import './widgets/low_attendance_widget.dart';
+import './widgets/percentage_data_widget.dart';
 import './widgets/overview_metrics_widget.dart';
 import './widgets/report_type_selector_widget.dart';
 import '../../services/teacher_service.dart';
@@ -31,7 +31,6 @@ class _ReportsScreenState extends State<ReportsScreen>
   String _selectedDateRange = 'This Month';
   DateTime? _customStartDate;
   DateTime? _customEndDate;
-  int _lowAttendanceThreshold = 75;
   bool _isLoading = true;
   final TextEditingController _searchController = TextEditingController();
   final TeacherService _teacherService = TeacherService();
@@ -80,7 +79,7 @@ class _ReportsScreenState extends State<ReportsScreen>
     },
   ];
 
-  final List<Map<String, dynamic>> _lowAttendanceStudents = [
+  final List<Map<String, dynamic>> _allStudentsMockData = [
     {
       'name': 'Michael Johnson',
       'rollNumber': 'CS003',
@@ -250,15 +249,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                           AttendanceChartWidget(chartData: _chartData),
                         ] else if (_selectedReportType == 'Detailed') ...[
                           DetailedReportWidget(subjectReports: _subjectReports),
-                        ] else if (_selectedReportType == 'Low Attendance') ...[
-                          LowAttendanceWidget(
-                            lowAttendanceStudents: _lowAttendanceStudents,
-                            threshold: _lowAttendanceThreshold,
-                            onThresholdChanged: (newThreshold) {
-                              setState(
-                                () => _lowAttendanceThreshold = newThreshold,
-                              );
-                            },
+                        ] else if (_selectedReportType == 'Percentage Data') ...[
+                          PercentageDataWidget(
+                            studentsData: _allStudentsMockData,
                           ),
                         ],
                         const SizedBox(height: 12),

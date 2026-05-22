@@ -4,7 +4,6 @@ import 'package:sizer/sizer.dart';
 import '../../core/app_export.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_bottom_bar.dart';
-import '../../widgets/custom_icon_widget.dart';
 import '../../services/teacher_service.dart';
 import './widgets/profile_overview_card_widget.dart';
 import './widgets/recent_activity_item_widget.dart';
@@ -23,9 +22,7 @@ class TeacherDashboard extends StatefulWidget {
   State<TeacherDashboard> createState() => _TeacherDashboardState();
 }
 
-class _TeacherDashboardState extends State<TeacherDashboard>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _TeacherDashboardState extends State<TeacherDashboard> {
   int _currentBottomNavIndex = 0;
   bool _isRefreshing = false;
 
@@ -50,7 +47,6 @@ class _TeacherDashboardState extends State<TeacherDashboard>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _loadDashboardData();
   }
 
@@ -87,7 +83,6 @@ class _TeacherDashboardState extends State<TeacherDashboard>
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -393,31 +388,7 @@ class _TeacherDashboardState extends State<TeacherDashboard>
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1200),
-            child: Column(
-              children: [
-                // Tab Bar
-                Container(
-                  color: theme.colorScheme.surface,
-                  child: TabBar(
-                    controller: _tabController,
-                    tabs: const [
-                       Tab(text: 'Dashboard'),
-                       Tab(text: 'Reports'),
-                    ],
-                  ),
-                ),
-                // Tab Bar View
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                       _buildDashboardTab(theme),
-                       _buildReportsTab(theme),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            child: _buildDashboardTab(theme),
           ),
         ),
       ),
@@ -621,43 +592,5 @@ class _TeacherDashboardState extends State<TeacherDashboard>
     );
   }
 
-  Widget _buildReportsTab(ThemeData theme) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CustomIconWidget(
-              iconName: 'assessment',
-              color: theme.colorScheme.primary,
-              size: 64,
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              'Reports View',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(height: 1.h),
-            Text(
-              'Access detailed attendance reports and analytics',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 3.h),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/reports-screen');
-              },
-              child: const Text('View Reports'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }

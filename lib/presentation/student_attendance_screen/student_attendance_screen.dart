@@ -14,6 +14,7 @@ import './widgets/attendance_summary_widget.dart';
 import './widgets/mark_attendance_button_widget.dart';
 import './widgets/qr_scanner_view.dart';
 import './widgets/confirm_attendance_dialog.dart';
+import './widgets/live_schedule_widget.dart';
 import '../../services/student_service.dart';
 import '../../data/models/session_model.dart';
 import '../../data/models/attendance_model.dart';
@@ -71,14 +72,12 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
   Future<void> _loadData({bool silent = false}) async {
     try {
       if (!silent && mounted) setState(() => _isLoading = true);
-      
+
       final session = await _studentService.getActiveSession();
       final history = await _studentService.getAttendanceHistory();
-      
+
       // Fetch profile if not already fetched
-      if (_studentProfile == null) {
-        _studentProfile = await _studentService.getStudentProfile();
-      }
+      _studentProfile ??= await _studentService.getStudentProfile();
 
       if (mounted) {
         setState(() {
@@ -86,7 +85,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
           _attendanceHistory = history;
           _isLoading = false;
         });
-        
+
         // Auto-show confirmation if new session detected
         if (session != null && !silent) {
           _showAutoDetectionDialog(session);
@@ -103,17 +102,20 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
     // Check if class matches
     final studentClass = _studentProfile?['student']?['class_name'] ?? '';
     final sessionClass = session.className ?? '';
-    final isClassMatch = sessionClass.toLowerCase() == studentClass.toLowerCase();
+    final isClassMatch =
+        sessionClass.toLowerCase() == studentClass.toLowerCase();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isClassMatch ? 'Active Lecture Detected' : 'Lecture in Progress'),
+        title: Text(
+          isClassMatch ? 'Active Lecture Detected' : 'Lecture in Progress',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('A session for ${session.subjectCode} is currently active.'),
+            Text('A session for ${session.subject} is currently active.'),
             if (!isClassMatch) ...[
               const SizedBox(height: 8),
               Container(
@@ -125,12 +127,19 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'This session is for ${session.className}, but your class is $studentClass.',
-                        style: const TextStyle(fontSize: 12, color: Colors.orange),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange,
+                        ),
                       ),
                     ),
                   ],
@@ -195,6 +204,44 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
       return;
     }
 
+    // Class restriction check
+    final studentClass = _studentProfile?['student']?['class_name'];
+    // Fallback to 'class' if 'class_name' isn't available, or check local hive mapping
+    final studentClassFallback = _studentProfile?['student']?['class']; 
+    final currentStudentClass = studentClass ?? studentClassFallback ?? '';
+    
+    final sessionClass = _activeSession!.className ?? '';
+    
+    // Check if both are defined and they mismatch
+    if (currentStudentClass.isNotEmpty && sessionClass.isNotEmpty && 
+        currentStudentClass.toLowerCase() != sessionClass.toLowerCase()) {
+          
+      // Special override for admins/testers, you can remove this later
+      // But for normal students, strictly enforce this
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.block, color: Theme.of(context).colorScheme.error),
+              const SizedBox(width: 8),
+              const Text('Class Mismatch'),
+            ],
+          ),
+          content: Text(
+            'This session is for $sessionClass, but you are enrolled in $currentStudentClass. You cannot mark attendance for this class.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final mode = _activeSession!.mode.toLowerCase();
     if (mode == 'qr' || mode == 'qr code') {
       _handleQRScan();
@@ -224,7 +271,9 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
                   'Hybrid',
                   token: rawData,
                 );
-                if (result != MarkAttendanceResult.failure) _markAttendanceSuccess(result);
+                if (result != MarkAttendanceResult.failure) {
+                  _markAttendanceSuccess(result);
+                }
               }
             }
           },
@@ -236,12 +285,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
   Future<String?> _handleBluetoothCheckOnly() async {
     // Show a small overlay/dialog for BLE check
     return await showDialog<String?>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => _BleCheckDialog(
-            sessionId: _activeSession?.id,
-          ),
-        );
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _BleCheckDialog(sessionId: _activeSession?.id),
+    );
   }
 
   void _handleQRScan() {
@@ -250,67 +297,90 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
       MaterialPageRoute(
         builder: (context) => QRScannerView(
           onScan: (rawData) async {
-            // Parse token to get Session ID (if encoded as ATTENDIX_QR:SESSION_ID:HASH)
-            String qrSessionId = rawData; 
+            // Pop the scanner view first — the scanner no longer pops itself
+            if (mounted) Navigator.pop(context);
+
+            debugPrint('QR_SCAN: Raw data = $rawData');
+
+            // Parse token to get Session ID
+            String qrSessionId = rawData;
             if (rawData.startsWith('ATTENDIX_QR:')) {
-               final parts = rawData.split(':');
-               if (parts.length >= 2) {
-                 qrSessionId = parts[1];
-               }
+              final parts = rawData.split(':');
+              if (parts.length >= 2) {
+                qrSessionId = parts[1]; // The session ID is the second part
+              }
+            } else {
+              // Not an ATTENDIX_QR token at all
+              if (mounted) {
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Invalid QR code. This is not an attendance QR code.',
+                    ),
+                    backgroundColor: Theme.of(this.context).colorScheme.error,
+                  ),
+                );
+              }
+              return;
             }
 
-            // Verify session matches active session if strict
+            // Verify session matches active session
             if (_activeSession != null && qrSessionId != _activeSession!.id) {
-               if (mounted) {
-                 ScaffoldMessenger.of(context).showSnackBar(
-                   SnackBar(
-                     content: const Text('QR Code does not match the active session.'),
-                     backgroundColor: Theme.of(context).colorScheme.error,
-                   ),
-                 );
-               }
-               return;
+              if (mounted) {
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'QR Code does not match the active session.',
+                    ),
+                    backgroundColor: Theme.of(this.context).colorScheme.error,
+                  ),
+                );
+              }
+              return;
             }
 
             // If no active session, fetch details for this session ID
             SessionModel? sessionToMark = _activeSession;
             if (sessionToMark == null) {
-              if (mounted) { // Show loading
-                ScaffoldMessenger.of(context).showSnackBar(
-                   const SnackBar(content: Text('Fetching session details...')),
+              if (mounted) {
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(content: Text('Fetching session details...')),
                 );
               }
-              
-              // Retry logic for fetching session
+
               int retries = 0;
               while (retries < 3) {
-                 try {
-                   sessionToMark = await _studentService.getSessionById(qrSessionId);
-                   if (sessionToMark != null) break;
-                 } catch (e) {
-                   // ignore error and retry
-                 }
-                 retries++;
-                 if (retries < 3) await Future.delayed(const Duration(seconds: 1));
+                try {
+                  sessionToMark = await _studentService.getSessionById(
+                    qrSessionId,
+                  );
+                  if (sessionToMark != null) break;
+                } catch (e) {
+                  // ignore error and retry
+                }
+                retries++;
+                if (retries < 3) {
+                  await Future.delayed(const Duration(seconds: 1));
+                }
               }
-              
+
               if (sessionToMark == null) {
                 if (mounted) {
-                   Navigator.pop(context); // Close any open dialogs if needed (though none open here yet)
-                   // Show a more helpful dialog or snackbar
-                   showDialog(
-                     context: context,
-                     builder: (context) => AlertDialog(
-                       title: const Text('Session Not Found'),
-                       content: const Text('Could not find the session details. Check your internet connection or try scanning again.'),
-                       actions: [
-                         TextButton(
-                           onPressed: () => Navigator.pop(context),
-                           child: const Text('OK'),
-                         ),
-                       ],
-                     ),
-                   );
+                  showDialog(
+                    context: this.context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Session Not Found'),
+                      content: const Text(
+                        'Could not find the session details. Check your internet connection or try scanning again.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
                 }
                 return;
               }
@@ -318,15 +388,16 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
 
             if (mounted) {
               showDialog(
-                context: context,
-                builder: (context) => ConfirmAttendanceDialog(
-                  sessionTitle: sessionToMark?.subjectCode ?? 'Unknown Subject',
-                  sessionSubtitle: '${sessionToMark?.className} • ${sessionToMark?.teacherName ?? "Teacher"}',
+                context: this.context,
+                builder: (dialogContext) => ConfirmAttendanceDialog(
+                  sessionTitle: sessionToMark?.subject ?? 'Unknown Subject',
+                  sessionSubtitle:
+                      '${sessionToMark?.className} • ${sessionToMark?.teacherName ?? "Teacher"}',
                   method: 'QR',
-                  onCancel: () => Navigator.pop(context),
+                  onCancel: () => Navigator.pop(dialogContext),
                   onConfirm: () async {
-                    Navigator.pop(context); // Close dialog
-                    
+                    Navigator.pop(dialogContext); // Close dialog
+
                     final result = await _studentService.markAttendance(
                       sessionToMark!.id,
                       'QR',
@@ -336,9 +407,12 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
                       if (result != MarkAttendanceResult.failure) {
                         _markAttendanceSuccess(result);
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        ScaffoldMessenger.of(this.context).showSnackBar(
                           const SnackBar(
-                            content: Text('Failed to mark attendance. Try again.'),
+                            content: Text(
+                              'Failed to mark attendance. The QR code may have expired. Try scanning the latest QR.',
+                            ),
+                            duration: Duration(seconds: 4),
                           ),
                         );
                       }
@@ -358,9 +432,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
     final String? foundSessionId = await showDialog<String?>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _BleCheckDialog(
-        sessionId: _activeSession?.id,
-      ),
+      builder: (context) => _BleCheckDialog(sessionId: _activeSession?.id),
     );
 
     if (foundSessionId == null) return;
@@ -368,33 +440,37 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
     // Determine which session to mark
     // If active session exists, use it. If not, use found session (manual mode).
     SessionModel? sessionToMark = _activeSession;
-    
+
     if (sessionToMark == null) {
-       // Manual mode: Fetch session details
-       if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('Found Session! Fetching details...')),
-          );
-       }
-       sessionToMark = await _studentService.getSessionById(foundSessionId);
+      // Manual mode: Fetch session details
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Found Session! Fetching details...')),
+        );
+      }
+      sessionToMark = await _studentService.getSessionById(foundSessionId);
     }
-    
+
     if (sessionToMark == null) {
-       if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('Failed to load session details.'), backgroundColor: Colors.red),
-          );
-       }
-       return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load session details.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
     }
 
     // 2. Beacon Found - Show Confirmation
     if (mounted) {
-       showDialog(
+      showDialog(
         context: context,
         builder: (context) => ConfirmAttendanceDialog(
-          sessionTitle: sessionToMark?.subjectCode ?? 'Unknown Subject',
-          sessionSubtitle: 'Verified via Bluetooth Beacon\n(${sessionToMark?.teacherName ?? "Teacher"})',
+          sessionTitle: sessionToMark?.subject ?? 'Unknown Subject',
+          sessionSubtitle:
+              'Verified via Bluetooth Beacon\n(${sessionToMark?.teacherName ?? "Teacher"})',
           method: 'Bluetooth',
           onCancel: () => Navigator.pop(context),
           onConfirm: () async {
@@ -403,7 +479,9 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
               sessionToMark!.id,
               'Bluetooth',
             );
-            if (result != MarkAttendanceResult.failure) _markAttendanceSuccess(result);
+            if (result != MarkAttendanceResult.failure) {
+              _markAttendanceSuccess(result);
+            }
           },
         ),
       );
@@ -467,21 +545,24 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
         SnackBar(
           content: Row(
             children: [
-               CustomIconWidget(
+              CustomIconWidget(
                 iconName: isOffline ? 'cloud_off' : 'check_circle',
                 size: 20,
                 color: Colors.white,
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(isOffline 
-                  ? 'Saved offline. Will sync when online.' 
-                  : 'Attendance marked successfully!'
+                child: Text(
+                  isOffline
+                      ? 'Saved offline. Will sync when online.'
+                      : 'Attendance marked successfully!',
                 ),
               ),
             ],
           ),
-          backgroundColor: isOffline ? Colors.orange : Theme.of(context).colorScheme.secondary,
+          backgroundColor: isOffline
+              ? Colors.orange
+              : Theme.of(context).colorScheme.secondary,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
         ),
@@ -574,11 +655,18 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
                 ),
               ),
             const SizedBox(height: 16),
+            AttendanceSummaryWidget(
+              presentCount: _presentCount,
+              totalCount: _totalCount,
+            ),
+            const SizedBox(height: 16),
+            const LiveScheduleWidget(),
+            const SizedBox(height: 24),
             ActiveSessionCardWidget(
               activeSession: _activeSession,
               onMarkAttendance: _handleMarkAttendance,
               onManualQR: _handleQRScan,
-              onManualBle: _handleBluetoothMark, 
+              onManualBle: _handleBluetoothMark,
             ),
             const SizedBox(height: 16),
             if (_activeSession != null)
@@ -587,12 +675,28 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
                 isMarked: false,
                 onPressed: _handleMarkAttendance,
               ),
-            const SizedBox(height: 24),
-            AttendanceSummaryWidget(
-              presentCount: _presentCount,
-              totalCount: _totalCount,
-            ),
             const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Leave Management coming soon. Phase 3 in progress.')),
+                    );
+                  },
+                  icon: const Icon(Icons.event_busy),
+                  label: const Text('Request Academic Leave'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -647,85 +751,109 @@ class _BleCheckDialogState extends State<_BleCheckDialog> {
 
       // Check adapter state with a timeout
       try {
-        final adapterState = await FlutterBluePlus.adapterState
+        await FlutterBluePlus.adapterState
             .firstWhere((s) => s == BluetoothAdapterState.on)
             .timeout(const Duration(seconds: 3));
       } catch (e) {
         // If we timed out waiting for ON, try to turn it on (Android) or show error
         if (Platform.isAndroid) {
-           try {
-             await FlutterBluePlus.turnOn();
-           } catch (_) {} 
+          try {
+            await FlutterBluePlus.turnOn();
+          } catch (_) {}
         }
-        
+
         // Check again briefly
         final state = await FlutterBluePlus.adapterState.first;
         if (state != BluetoothAdapterState.on) {
-           throw Exception('Bluetooth is off. Please turn it on and retry.');
+          throw Exception('Bluetooth is off. Please turn it on and retry.');
         }
       }
-      
+
       if (mounted) setState(() => _status = 'Scanning for Teacher...');
 
-      // Target Service UUID
-      final targetUuid = "bf27730d-860a-4e09-889c-2d8b6a9e0fe7";
-      
-      // Start Scan
+      final String shortSessionId = widget.sessionId?.substring(0, 8) ?? '';
+      debugPrint('BLE_SCAN: Looking for ATX:$shortSessionId (sessionId=${widget.sessionId})');
+
+      // IMPORTANT: Do NOT use withServices filter — it is unreliable across
+      // Android devices when the advertiser uses flutter_ble_peripheral.
+      // Instead, scan for ALL devices and filter by name prefix in software.
       await FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 12),
-        withServices: [], // Scan for all to be safe, filtering can differ by phone
+        timeout: const Duration(seconds: 15),
+        androidScanMode: AndroidScanMode.lowLatency,
       );
-      
+
       bool beaconFound = false;
       _scanSubscription = FlutterBluePlus.onScanResults.listen((results) {
         for (ScanResult r in results) {
-          bool match = false;
-          // Check Service UUID
-          final hasServiceUuid = r.advertisementData.serviceUuids.contains(Guid(targetUuid));
+          // Check both advName and platformName for the ATX: prefix
+          final advName = r.advertisementData.advName;
+          final platformName = r.device.platformName;
+          final String detectedName = advName.isNotEmpty ? advName : platformName;
           
-          if (hasServiceUuid) {
-             if (widget.sessionId != null) {
-                // Specific check
-                // Check name contains session ID OR "Attendix" if we want to be linient
-                final localName = r.advertisementData.localName;
-                if (localName.contains(widget.sessionId!) || localName.contains('Attendix')) {
-                      match = true;
-                }
-             } else {
-               // Generic match
-               match = true;
-             }
+          // Log all discovered devices for debugging
+          if (detectedName.isNotEmpty) {
+            debugPrint('BLE_SCAN: Found device: name="$detectedName" rssi=${r.rssi} '
+                'serviceUuids=${r.advertisementData.serviceUuids}');
+          }
+
+          bool match = false;
+
+          if (shortSessionId.isNotEmpty && detectedName == 'ATX:$shortSessionId') {
+            match = true;
+          } else if (shortSessionId.isEmpty && detectedName.startsWith('ATX:')) {
+            match = true;
           }
 
           if (match) {
+            debugPrint('BLE_SCAN: ✅ MATCH FOUND! name=$detectedName rssi=${r.rssi}');
+            
+            // Validate Proximity
+            if (r.rssi < -85) {
+              // Too far away (adjustable threshold)
+              if (mounted) {
+                setState(
+                  () => _status =
+                      'Found Teacher (signal: ${r.rssi}dBm), but you are too far away. Move closer...',
+                );
+              }
+              continue;
+            }
             beaconFound = true;
             FlutterBluePlus.stopScan();
             String? foundId = widget.sessionId;
-            if (foundId == null) {
-               final parts = r.advertisementData.localName.split(':');
-               foundId = parts.length > 1 ? parts[1] : null; 
-            }
-            if (mounted) Navigator.pop(context, foundId ?? 'UNKNOWN');
+            foundId ??= detectedName;
+            if (mounted) Navigator.pop(context, foundId);
             break;
           }
         }
       });
 
       // Wait for scan to complete (it stops automatically after timeout)
-      await Future.delayed(const Duration(seconds: 13)); // slightly longer than scan timeout
-      
+      await Future.delayed(
+        const Duration(seconds: 16),
+      ); // slightly longer than scan timeout
+
       if (!beaconFound && mounted && _isScanning) {
-         setState(() {
-           _isError = true;
-           _isScanning = false;
-           _status = 'Teacher not found nearby.\nEnsure you are close to the teacher.';
-         });
+        debugPrint('BLE_SCAN: ❌ No matching teacher device found');
+        setState(() {
+          _isError = true;
+          _isScanning = false;
+          _status =
+              'Teacher not found nearby.\n\nMake sure:\n• Teacher has Bluetooth session active\n• You are close to the teacher\n• Location/GPS is enabled';
+        });
       }
-      
     } catch (e) {
+      debugPrint('BLE_SCAN: Error: $e');
       if (mounted) {
         setState(() {
-          _status = e.toString().replaceAll('Exception: ', '');
+          String errorMsg = e.toString();
+          if (errorMsg.contains('Location services are required') ||
+              errorMsg.contains('location')) {
+            errorMsg = 'Location services (GPS) are required to scan for Bluetooth signals on Android.\n\nPlease enable Location in your device settings and retry.';
+          } else {
+            errorMsg = errorMsg.replaceAll('Exception: ', '').replaceAll('PlatformException', 'Error');
+          }
+          _status = errorMsg;
           _isError = true;
           _isScanning = false;
         });
@@ -744,9 +872,9 @@ class _BleCheckDialogState extends State<_BleCheckDialog> {
             const CircularProgressIndicator()
           else if (_isError)
             const Icon(Icons.error_outline, color: Colors.orange, size: 48)
-          else 
+          else
             const Icon(Icons.bluetooth_searching, size: 48, color: Colors.blue),
-            
+
           const SizedBox(height: 16),
           Text(_status, textAlign: TextAlign.center),
         ],
@@ -757,10 +885,7 @@ class _BleCheckDialogState extends State<_BleCheckDialog> {
           child: const Text('Cancel'),
         ),
         if (_isError)
-          ElevatedButton(
-            onPressed: _startBleCheck,
-            child: const Text('Retry'),
-          ),
+          ElevatedButton(onPressed: _startBleCheck, child: const Text('Retry')),
       ],
     );
   }

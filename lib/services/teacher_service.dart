@@ -24,15 +24,27 @@ class TeacherService {
   }
 
   /// Create a new session
-  Future<String?> createSession(String classId, String mode) async {
+  Future<String?> createSession(
+    String classId,
+    String mode,
+    String subject,
+  ) async {
     try {
+      String dbMode = 'QR';
+      if (mode.toLowerCase().contains('ble') ||
+          mode.toLowerCase().contains('bluetooth')) {
+        dbMode = 'BLE';
+      }
+      if (mode.toLowerCase().contains('hybrid')) dbMode = 'HYBRID';
+
       final data = await _supabase
           .from('sessions')
           .insert({
             'class_id': classId,
             'teacher_id': _supabase.auth.currentUser!.id,
             'is_active': true,
-            'mode': mode, // 'QR' or 'Bluetooth'
+            'mode': dbMode,
+            'subject': subject,
             'start_time': DateTime.now().toIso8601String(),
           })
           .select()
@@ -52,23 +64,64 @@ class TeacherService {
       return sessionId;
     } catch (e) {
       print('TEACHER_SERVICE: Error in createSession: $e');
-      return null;
+      rethrow;
+    }
+  }
+
+  /// Ensure the current user exists in the public.users table.
+  /// This is a safety net for cases where the DB trigger failed.
+  Future<void> _ensureUserInUsersTable() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final existing = await _supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (existing == null) {
+        // User not in public.users — insert them now
+        await _supabase.from('users').insert({
+          'id': user.id,
+          'email': user.email ?? '',
+          'name': user.userMetadata?['name'] ??
+              user.userMetadata?['full_name'] ??
+              user.email?.split('@').first ??
+              'Teacher',
+          'role': 'teacher',
+        });
+        print('TEACHER_SERVICE: Inserted missing user into public.users');
+      }
+    } catch (e) {
+      print('TEACHER_SERVICE: _ensureUserInUsersTable error: $e');
+      // If it fails with a unique constraint (already exists), that's fine
     }
   }
 
   /// Get an existing class ID or create a new one if it doesn't exist
   /// [totalStudents] is updated if class already exists
-  Future<String?> getOrCreateClass(String subjectCode, String className, {int totalStudents = 50}) async {
+  Future<String?> getOrCreateClass(
+    String subjectCode,
+    String className, {
+    int totalStudents = 50,
+  }) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return null;
 
     try {
+      // Safety net: ensure teacher exists in public.users to prevent FK errors
+      await _ensureUserInUsersTable();
+
       // 1. Fetch all classes for this teacher to do case-insensitive comparison
       final classes = await getClasses();
-      
+
       final existingClass = classes.cast<Map<String, dynamic>?>().firstWhere(
-        (c) => c!['name'].toString().toLowerCase() == className.toLowerCase() && 
-               c['subject_code'].toString().toLowerCase() == subjectCode.toLowerCase(),
+        (c) =>
+            c!['name'].toString().toLowerCase() == className.toLowerCase() &&
+            c['subject_code'].toString().toLowerCase() ==
+                subjectCode.toLowerCase(),
         orElse: () => null,
       );
 

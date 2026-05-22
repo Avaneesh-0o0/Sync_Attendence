@@ -1,0 +1,105 @@
+﻿Analyzing attendence...                                         
+
+warning - The value of the local variable 'now' isn't used - lib\data\repositories\attendance_repository.dart:16:13 - unused_local_variable
+   info - Don't invoke 'print' in production code - lib\data\repositories\auth_repository.dart:59:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\data\repositories\auth_repository.dart:65:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\data\repositories\auth_repository.dart:66:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\data\repositories\auth_repository.dart:76:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\data\repositories\auth_repository.dart:77:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\data\repositories\auth_repository.dart:87:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\data\repositories\auth_repository.dart:88:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\presentation\live_attendance_screen\live_attendance_screen.dart:221:29 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\presentation\live_attendance_screen\live_attendance_screen.dart:504:17 - avoid_print
+   info - 'foregroundColor' is deprecated and shouldn't be used. use colors in eyeStyle and dataModuleStyle instead - lib\presentation\live_attendance_screen\widgets\qr_code_display_widget.dart:164:25 - deprecated_member_use
+warning - The value of the field '_fadeAnimation' isn't used - lib\presentation\login_screen\login_screen.dart:25:26 - unused_field
+warning - The value of the field '_slideAnimation' isn't used - lib\presentation\login_screen\login_screen.dart:26:26 - unused_field
+   info - Don't invoke 'print' in production code - lib\presentation\login_screen\login_screen.dart:93:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\login_screen\login_screen.dart:100:11 - avoid_print
+   info - Statements in an if should be enclosed in a block - lib\presentation\login_screen\login_screen.dart:564:19 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\login_screen\login_screen.dart:569:19 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\login_screen\login_screen.dart:571:19 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\login_screen\login_screen.dart:573:19 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\login_screen\login_screen.dart:575:19 - curly_braces_in_flow_control_structures
+   info - Parameter 'key' could be a super parameter - lib\presentation\login_screen\widgets\role_selection_dialog.dart:5:9 - use_super_parameters
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\presentation\reports_screen\widgets\export_button_widget.dart:48:13 - deprecated_member_use
+   info - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\presentation\reports_screen\widgets\export_button_widget.dart:48:19 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\presentation\splash_screen\splash_screen.dart:94:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\splash_screen\splash_screen.dart:99:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\splash_screen\splash_screen.dart:102:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\splash_screen\splash_screen.dart:111:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\presentation\splash_screen\splash_screen.dart:115:7 - avoid_print
+warning - The value of the field '_isRefreshing' isn't used - lib\presentation\student_attendance_screen\student_attendance_screen.dart:35:8 - unused_field
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\student_attendance_screen\student_attendance_screen.dart:123:40 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\presentation\student_attendance_screen\student_attendance_screen.dart:236:19 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\presentation\student_attendance_screen\student_attendance_screen.dart:307:19 - curly_braces_in_flow_control_structures
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\student_attendance_screen\student_attendance_screen.dart:313:21 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\student_attendance_screen\student_attendance_screen.dart:317:21 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\student_attendance_screen\student_attendance_screen.dart:338:17 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\student_attendance_screen\student_attendance_screen.dart:357:46 - use_build_context_synchronously
+   info - Statements in an if should be enclosed in a block - lib\presentation\student_attendance_screen\student_attendance_screen.dart:429:15 - curly_braces_in_flow_control_structures
+warning - The value of the local variable 'adapterState' isn't used - lib\presentation\student_attendance_screen\student_attendance_screen.dart:676:15 - unused_local_variable
+   info - 'localName' is deprecated and shouldn't be used. use advName instead - lib\presentation\student_attendance_screen\student_attendance_screen.dart:717:37 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\presentation\student_attendance_screen\student_attendance_screen.dart:727:17 - curly_braces_in_flow_control_structures
+warning - Dead code - lib\presentation\student_attendance_screen\widgets\active_session_card_widget.dart:210:17 - dead_code
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\student_profile\student_profile_screen.dart:260:43 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\student_profile\student_profile_screen.dart:266:43 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\student_profile\student_profile_screen.dart:267:113 - use_build_context_synchronously
+   info - 'WillPopScope' is deprecated and shouldn't be used. Use PopScope instead. The Android predictive back feature will not work with WillPopScope. This feature was deprecated after v3.12.0-1.0.pre - lib\presentation\student_profile_setup\student_profile_setup.dart:172:12 - deprecated_member_use
+warning - The value of the field '_isRefreshing' isn't used - lib\presentation\teacher_dashboard\teacher_dashboard.dart:29:8 - unused_field
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\teacher_dashboard\teacher_dashboard.dart:176:83 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\teacher_dashboard\teacher_dashboard.dart:200:71 - deprecated_member_use
+warning - The value of the local variable 'theme' isn't used - lib\presentation\teacher_dashboard\teacher_dashboard.dart:291:11 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\teacher_dashboard\teacher_dashboard.dart:357:41 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\services\auth_service.dart:100:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\auth_service.dart:104:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\auth_service.dart:107:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\auth_service.dart:113:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\notification_service.dart:25:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\notification_service.dart:38:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\notification_service.dart:61:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\notification_service.dart:73:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\notification_service.dart:88:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:39:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:60:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:67:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:86:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:90:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:99:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:100:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:113:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\profile_service.dart:128:7 - avoid_print
+   info - Statements in an if should be enclosed in a block - lib\services\student_service.dart:71:11 - curly_braces_in_flow_control_structures
+   info - Don't invoke 'print' in production code - lib\services\student_service.dart:90:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\student_service.dart:100:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\student_service.dart:159:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\student_service.dart:166:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\student_service.dart:270:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\student_service.dart:287:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\teacher_service.dart:66:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\teacher_service.dart:95:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\teacher_service.dart:98:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\teacher_service.dart:155:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\teacher_service.dart:225:7 - avoid_print
+warning - The value of the local variable 'colorScheme' isn't used - lib\widgets\custom_tab_bar.dart:177:11 - unused_local_variable
+   info - Don't invoke 'print' in production code - lib\widgets\profile_avatar_widget.dart:113:7 - avoid_print
+   info - Don't invoke 'print' in production code - test_auth.dart:14:5 - avoid_print
+   info - Don't invoke 'print' in production code - test_auth.dart:21:7 - avoid_print
+   info - Don't invoke 'print' in production code - test_auth.dart:33:11 - avoid_print
+   info - Don't invoke 'print' in production code - test_auth.dart:35:11 - avoid_print
+   info - Don't invoke 'print' in production code - test_auth.dart:39:7 - avoid_print
+   info - Don't invoke 'print' in production code - test_auth.dart:44:5 - avoid_print
+
+flutter : 88 issues found. (ran 
+in 5.3s)
+At line:1 char:1
++ flutter analyze --no-pub 2>&1 | 
+Out-File -FilePath 
+C:\attendence\anal ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : Not 
+   Specified: (88 issues found.   
+  (ran in 5.3s):String) [], Rem   
+ oteException
+    + FullyQualifiedErrorId : Nat 
+   iveCommandError
+ 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../core/app_export.dart';
 import '../../widgets/custom_icon_widget.dart';
@@ -73,15 +75,63 @@ class _StudentProfileSetupState extends State<StudentProfileSetup> {
 
     setState(() => _isLoading = true);
 
-    // Simulate API call to check duplicate roll number and save profile
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
 
-    if (!mounted) return;
+      if (userId == null) {
+        throw Exception('User not logged in');
+      }
 
-    setState(() => _isLoading = false);
+      // First check if a student record exists, if not create one
+      final studentResponse = await supabase
+          .from('students')
+          .select()
+          .eq('user_id', userId)
+          .maybeSingle();
 
-    // Show success animation
-    _showSuccessDialog();
+      if (studentResponse == null) {
+        // Find class ID matching selected class (simple mock matching for now since we don't have the full class dropdown with IDs)
+        // In a real app we'd query the classes table to get the correct UUID
+        
+        await supabase.from('students').insert({
+          'user_id': userId,
+          'roll_no': _rollNumberController.text.trim(),
+          // class_id would go here if we had it mapped properly
+        });
+      } else {
+        await supabase.from('students').update({
+          'roll_no': _rollNumberController.text.trim(),
+        }).eq('user_id', userId);
+      }
+
+      // Update user department
+      await supabase.from('users').update({
+        'department': _selectedDepartment,
+      }).eq('id', userId);
+
+      // Save to local Hive cache for offline use
+      final box = await Hive.openBox('student_profile');
+      await box.put('roll_number', _rollNumberController.text.trim());
+      await box.put('class_name', _selectedClass); // Stored locally for matching
+      await box.put('section', _selectedSection);
+      await box.put('department', _selectedDepartment);
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      // Show success animation
+      _showSuccessDialog();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save profile: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 
   void _showSuccessDialog() {
@@ -169,8 +219,15 @@ class _StudentProfileSetupState extends State<StudentProfileSetup> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop(result);
+        }
+      },
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(

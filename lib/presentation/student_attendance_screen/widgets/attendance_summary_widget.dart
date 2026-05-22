@@ -22,167 +22,163 @@ class AttendanceSummaryWidget extends StatelessWidget {
         ? (presentCount / totalCount * 100).toInt()
         : 0;
 
+    final isDanger = percentage < 75;
+    final isWarning = percentage >= 75 && percentage < 85;
+    final statusColor = isDanger
+        ? theme.colorScheme.error
+        : (isWarning ? AppTheme.warningLight : theme.colorScheme.secondary);
+
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      padding: const EdgeInsets.all(16),
-
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: statusColor.withValues(alpha: 0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
         border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CustomIconWidget(
-                iconName: 'calendar_today',
-                size: 20,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
               Text(
-
-                'Today\'s Attendance',
+                'Overall Attendance',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onSurface,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  isDanger ? 'Critical' : (isWarning ? 'At Risk' : 'Perfect'),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: statusColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              )
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 32),
+          SizedBox(
+            width: 160,
+            height: 160,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 160,
+                  height: 160,
+                  child: CircularProgressIndicator(
+                    value: percentage / 100,
+                    strokeWidth: 12,
+                    strokeCap: StrokeCap.round,
+                    backgroundColor: theme.colorScheme.outline.withValues(
+                      alpha: 0.1,
+                    ),
+                    valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Classes Attended',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      '$percentage%',
+                      style: theme.textTheme.displayMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      'Attended',
+                      style: theme.textTheme.labelMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '$presentCount',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            color: theme.colorScheme.secondary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          ' / $totalCount',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
-                ),
-              ),
-              SizedBox(
-                width: 80,
-                height: 80,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: CircularProgressIndicator(
-                        value: percentage / 100,
-                        strokeWidth: 8,
-                        backgroundColor: theme.colorScheme.outline.withValues(
-                          alpha: 0.2,
-                        ),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          percentage >= 75
-                              ? theme.colorScheme.secondary
-                              : percentage >= 50
-                              ? AppTheme.warningLight
-                              : theme.colorScheme.error,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '$percentage%',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-
-            decoration: BoxDecoration(
-              color: percentage >= 75
-                  ? theme.colorScheme.secondary.withValues(alpha: 0.1)
-                  : percentage >= 50
-                  ? AppTheme.warningLight.withValues(alpha: 0.1)
-                  : theme.colorScheme.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                CustomIconWidget(
-                  iconName: percentage >= 75
-                      ? 'trending_up'
-                      : percentage >= 50
-                      ? 'remove'
-                      : 'trending_down',
-                  size: 16,
-                  color: percentage >= 75
-                      ? theme.colorScheme.secondary
-                      : percentage >= 50
-                      ? AppTheme.warningLight
-                      : theme.colorScheme.error,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-
-                  child: Text(
-                    percentage >= 75
-                        ? 'Great attendance! Keep it up'
-                        : percentage >= 50
-                        ? 'Good attendance, maintain consistency'
-                        : 'Low attendance, attend more classes',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: percentage >= 75
-                          ? theme.colorScheme.secondary
-                          : percentage >= 50
-                          ? AppTheme.warningLight
-                          : theme.colorScheme.error,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildStatItem('Attended', presentCount.toString(), theme.colorScheme.secondary, theme),
+              Container(width: 1, height: 40, color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+              _buildStatItem('Missed', (totalCount - presentCount).toString(), theme.colorScheme.error, theme),
+              Container(width: 1, height: 40, color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+              _buildStatItem('Total', totalCount.toString(), theme.colorScheme.primary, theme),
+            ],
+          ),
+          if (isDanger) ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                   Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+                   const SizedBox(width: 12),
+                   Expanded(
+                     child: Text(
+                       'Your attendance is below the mandatory 75% required to sit for finals.',
+                       style: theme.textTheme.bodySmall?.copyWith(
+                         color: theme.colorScheme.error,
+                         fontWeight: FontWeight.w600,
+                       ),
+                     )
+                   )
+                ]
+              )
+            )
+          ]
         ],
       ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color color, ThemeData theme) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }
