@@ -74,66 +74,55 @@ class _SplashScreenState extends State<SplashScreen> {
     );
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/oursplash.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Container(
-          // Subtle dark overlay to ensure the logo pops if the splash image is bright
-          color: Colors.black.withValues(alpha: 0.3),
-          child: SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Holographic Spinning Ring 1
-                      SizedBox(
-                        width: 180,
-                        height: 180,
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            const Color(0xFF00F5FF).withValues(alpha: 0.6),
-                          ),
-                          strokeWidth: 2,
+      body: CyberGridBackground(
+        type: CyberBackgroundType.cinematic,
+        child: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Holographic Spinning Ring 1
+                    SizedBox(
+                      width: 180,
+                      height: 180,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          const Color(0xFF00F5FF).withValues(alpha: 0.6),
                         ),
-                      ).animate(onPlay: (controller) => controller.repeat())
-                       .rotate(duration: 3000.ms, curve: Curves.linear),
-                      
-                      // Holographic Spinning Ring 2 (reverse)
-                      SizedBox(
-                        width: 200,
-                        height: 200,
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            const Color(0xFF7C3AED).withValues(alpha: 0.3),
-                          ),
-                          strokeWidth: 1,
+                        strokeWidth: 2,
+                      ),
+                    ).animate(onPlay: (controller) => controller.repeat())
+                     .rotate(duration: 3000.ms, curve: Curves.linear),
+                    
+                    // Holographic Spinning Ring 2 (reverse)
+                    SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          const Color(0xFF7C3AED).withValues(alpha: 0.3),
                         ),
-                      ).animate(onPlay: (controller) => controller.repeat())
-                       .rotate(begin: 1, end: 0, duration: 5000.ms, curve: Curves.linear),
+                        strokeWidth: 1,
+                      ),
+                    ).animate(onPlay: (controller) => controller.repeat())
+                     .rotate(begin: 1, end: 0, duration: 5000.ms, curve: Curves.linear),
 
-                      // Logo Widget
-                      const CustomLogoWidget(size: 130),
-                    ],
-                  ).animate().fadeIn(duration: 1000.ms).scale(
-                    begin: const Offset(0.8, 0.8),
-                    end: const Offset(1.0, 1.0),
-                    duration: 1500.ms,
-                    curve: Curves.easeOutExpo,
-                  ),
-                ],
-              ),
+                    // Logo Widget
+                    const CustomLogoWidget(size: 130),
+                  ],
+                ).animate().fadeIn(duration: 1000.ms).scale(
+                  begin: const Offset(0.8, 0.8),
+                  end: const Offset(1.0, 1.0),
+                  duration: 1500.ms,
+                  curve: Curves.easeOutExpo,
+                ),
+              ],
             ),
           ),
-        ).animate().fadeIn(duration: 1500.ms), 
+        ),
       ),
     );
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-
+import '../../core/app_export.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_bottom_bar.dart';
 import './widgets/attendance_chart_widget.dart';
@@ -149,32 +148,31 @@ class _ReportsScreenState extends State<ReportsScreen>
         },
         notificationCount: 3,
       ),
-      body: Column(
-        children: [
-          Expanded(
-
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
-                    ),
-                  )
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Class Selector
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
-                          ),
-                          child: DropdownButtonHideUnderline(
+      body: CyberGridBackground(
+        type: CyberBackgroundType.clean,
+        child: Column(
+          children: [
+            Expanded(
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Class Selector
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface.withValues(alpha: 0.65),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+                            ),
+                            child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: _selectedClassId,
                               isExpanded: true,
@@ -255,15 +253,14 @@ class _ReportsScreenState extends State<ReportsScreen>
                           ),
                         ],
                         const SizedBox(height: 12),
-
                         Center(child: ExportButtonWidget(onExport: () {})),
                         const SizedBox(height: 8),
                       ],
-
                     ),
                   ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: CustomBottomBar.teacher(
         currentIndex: _currentBottomIndex,

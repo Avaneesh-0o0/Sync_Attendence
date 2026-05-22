@@ -237,7 +237,9 @@ class _StudentProfileSetupState extends State<StudentProfileSetup> {
           foregroundColor: theme.colorScheme.onPrimary,
           elevation: 0,
         ),
-        body: SafeArea(
+      body: CyberGridBackground(
+        type: CyberBackgroundType.clean,
+        child: SafeArea(
           child: Column(
             children: [
               ProgressIndicatorWidget(
@@ -277,7 +279,7 @@ class _StudentProfileSetupState extends State<StudentProfileSetup> {
               Container(
                 padding: EdgeInsets.all(4.w),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
+                  color: theme.colorScheme.surface.withValues(alpha: 0.65),
                   boxShadow: [
                     BoxShadow(
                       color: theme.colorScheme.shadow.withValues(alpha: 0.1),
@@ -329,7 +331,8 @@ class _StudentProfileSetupState extends State<StudentProfileSetup> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   int _getCompletedSteps() {

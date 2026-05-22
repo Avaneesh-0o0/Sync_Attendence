@@ -103,7 +103,6 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text('Start Attendance Session'),
         leading: IconButton(
@@ -142,15 +141,17 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      body: CyberGridBackground(
+        type: CyberBackgroundType.clean,
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // Header section
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -400,7 +401,8 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Future<void> _startSession() async {

@@ -268,6 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       child: Scaffold(
         body: CyberGridBackground(
+          type: CyberBackgroundType.cinematic,
           child: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -357,8 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               child: _buildAuthenticationSection(theme, colorScheme),
                             ).animate().fadeIn(duration: 600.ms, curve: Curves.easeOut).slideY(begin: 0.1, end: 0),
-                            SizedBox(height: 3.h),
-                            _buildFooterSection(theme, colorScheme),
+                            const SizedBox(height: 40),
                           ],
                         ),
                       ),
@@ -398,7 +398,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'Secure Attendance Marking & AI-Powered Live Analytics',
+              'Smart QR + BLE Attendance System',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
@@ -418,7 +418,7 @@ class _LoginScreenState extends State<LoginScreen> {
       height: double.infinity,
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: const AssetImage('assets/images/oursplash.png'),
+          image: const AssetImage('assets/images/bg2.png'),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
             theme.scaffoldBackgroundColor.withOpacity(0.8),
@@ -448,7 +448,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: Text(
-                'Secure Attendance Marking & AI-Powered Live Analytics',
+                'Smart QR + BLE Attendance System',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: Colors.white70,
@@ -610,7 +610,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     )
                   : Text(
-                      _isLoginMode ? 'INITIALIZE SESSION' : 'REGISTER PROFILE',
+                      _isLoginMode ? 'SIGN IN' : 'CREATE ACCOUNT',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         
@@ -632,14 +632,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text.rich(
               TextSpan(
                 text: _isLoginMode
-                    ? "New Operator? "
-                    : "Existing Operator? ",
+                    ? "New here? "
+                    : "Already have an account? ",
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface.withOpacity(0.7),
                 ),
                 children: [
                   TextSpan(
-                    text: _isLoginMode ? 'Register Here' : 'Sign In Here',
+                    text: _isLoginMode ? 'Create Account' : 'Sign In',
                     style: TextStyle(
                       color: colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -663,7 +663,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'OR SECURE HUB ACCESS',
+                  'OR CONTINUE WITH',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurface.withOpacity(0.5),
                     
@@ -766,38 +766,5 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildFooterSection(ThemeData theme, ColorScheme colorScheme) {
-    return Column(
-      children: [
-        Text(
-          'SECURE PROTOCOL ENABLED',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurface.withOpacity(0.4),
-            
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.verified_user_outlined,
-              size: 14,
-              color: colorScheme.primary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'End-to-End Encryption Mode',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w500,
-                
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+
 }

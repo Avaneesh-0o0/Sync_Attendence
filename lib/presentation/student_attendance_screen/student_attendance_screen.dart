@@ -681,33 +681,36 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
           _tabController.animateTo(1);
         },
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1000),
-                child: Column(
-                  children: [
-                    Container(
-                      color: theme.colorScheme.surface,
-                      child: TabBar(
-                        controller: _tabController,
-                        tabs: const [
-                          Tab(text: 'Attendance'),
-                          Tab(text: 'History'),
-                        ],
+      body: CyberGridBackground(
+        type: CyberBackgroundType.clean,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1000),
+                  child: Column(
+                    children: [
+                      Container(
+                        color: theme.colorScheme.surface.withValues(alpha: 0.65),
+                        child: TabBar(
+                          controller: _tabController,
+                          tabs: const [
+                            Tab(text: 'Attendance'),
+                            Tab(text: 'History'),
+                          ],
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildAttendanceTab(theme),
-                          _buildHistoryTab(theme),
-                        ],
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildAttendanceTab(theme),
+                            _buildHistoryTab(theme),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -124,10 +124,11 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
         onNotificationPressed: () {},
         onSettingsPressed: () {},
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : CyberGridBackground(
-              child: RefreshIndicator(
+      body: CyberGridBackground(
+        type: CyberBackgroundType.clean,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
                 onRefresh: _loadProfile,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
