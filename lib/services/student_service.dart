@@ -65,7 +65,7 @@ class StudentService {
     final now = DateTime.now();
     final currentWindowId = now.millisecondsSinceEpoch ~/ (windowSize * 1000);
 
-    if ((tokenWindowId - currentWindowId).abs() > 1) {
+    if ((tokenWindowId - currentWindowId).abs() > 3) {
       debugPrint('QR_VALIDATE: Window expired: token=$tokenWindowId current=$currentWindowId');
       return false;
     }
@@ -110,7 +110,7 @@ class StudentService {
     };
 
     final connectivityResult = await Connectivity().checkConnectivity();
-    final isOffline = connectivityResult.any(
+    final isOffline = connectivityResult.every(
       (r) => r == ConnectivityResult.none,
     );
 
@@ -153,6 +153,10 @@ class StudentService {
       }
     } catch (e) {
       print('STUDENT_SERVICE: Online mark failed: $e');
+      if (e is PostgrestException && e.code == '23505') {
+        debugPrint('STUDENT_SERVICE: Attendance already marked in database (23505)');
+        return MarkAttendanceResult.successOnline;
+      }
       return await _saveOffline(attendanceData);
     }
   }
@@ -200,6 +204,10 @@ class StudentService {
           keysToDelete.add(key);
         } catch (e) {
           print('SYNC_SERVICE: Failed to sync record $key: $e');
+          if (e is PostgrestException && e.code == '23505') {
+            debugPrint('SYNC_SERVICE: Record $key already exists in DB. Dequeuing.');
+            keysToDelete.add(key);
+          }
         }
       }
 

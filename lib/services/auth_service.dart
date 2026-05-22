@@ -1,6 +1,7 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'supabase_service.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/auth_repository.dart';
@@ -50,9 +51,9 @@ class AuthService {
         return null; // Will redirect
       } else {
         // Native Android/iOS flow
-        // Provided by user or environment
-        const webClientId = 'my-web.apps.googleusercontent.com'; // Placeholder
-        const iosClientId = 'my-ios.apps.googleusercontent.com'; // Placeholder
+        // Read client IDs from .env instead of hardcoded placeholders
+        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? 'my-web.apps.googleusercontent.com'; 
+        final iosClientId = dotenv.env['GOOGLE_IOS_CLIENT_ID'] ?? 'my-ios.apps.googleusercontent.com';
 
         final GoogleSignIn googleSignIn = GoogleSignIn(
           clientId: defaultTargetPlatform == TargetPlatform.iOS

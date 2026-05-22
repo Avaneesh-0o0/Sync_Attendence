@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/app_export.dart';
@@ -255,27 +257,124 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
     }
   }
 
-  void _handleHybridMark() {
-    // Stage 1: QR Scan
+  Future<void> _handleHybridMark() async {
+    // Stage 1: Bluetooth Proximity Check First
+    final String? foundSessionId = await showDialog<String?>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _BleCheckDialog(
+        sessionId: _activeSession?.id,
+        isHybrid: true,
+      ),
+    );
+
+    if (foundSessionId == null) {
+      // User aborted the check
+      return;
+    }
+
+    if (foundSessionId == 'HYBRID_QR_FALLBACK') {
+      // Bluetooth check failed or was bypassed. Fall back to QR scanning.
+      debugPrint('HYBRID_MARK: Bluetooth verification failed/skipped. Proceeding to QR scan.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bluetooth unavailable. Proceeding with QR scan.'),
+          duration: Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      _proceedToHybridQrScan(isBleVerified: false);
+    } else {
+      // Bluetooth verified successfully! Proceed to QR scanning.
+      debugPrint('HYBRID_MARK: Bluetooth verified successfully. Proceeding to QR scan.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bluetooth verified! Scanning QR Code to complete.'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      _proceedToHybridQrScan(isBleVerified: true);
+    }
+  }
+
+  void _proceedToHybridQrScan({required bool isBleVerified}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => QRScannerView(
           onScan: (rawData) async {
-            // Stage 2: Bluetooth Proximity
-            if (mounted) {
-              Navigator.pop(context); // Close QR view
-              final String? foundSessionId = await _handleBluetoothCheckOnly();
-              if (foundSessionId != null) {
-                final result = await _studentService.markAttendance(
-                  _activeSession!.id,
-                  'Hybrid',
-                  token: rawData,
-                );
-                if (result != MarkAttendanceResult.failure) {
-                  _markAttendanceSuccess(result);
-                }
+            if (mounted) Navigator.pop(context); // Close QR Scanner
+
+            debugPrint('HYBRID_QR_SCAN: Raw data = $rawData');
+
+            // Parse token to get Session ID
+            String qrSessionId = rawData;
+            if (rawData.startsWith('ATTENDIX_QR:')) {
+              final parts = rawData.split(':');
+              if (parts.length >= 2) {
+                qrSessionId = parts[1];
               }
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Invalid QR code. This is not an attendance QR code.',
+                    ),
+                    backgroundColor: Theme.of(this.context).colorScheme.error,
+                  ),
+                );
+              }
+              return;
+            }
+
+            if (_activeSession != null && qrSessionId != _activeSession!.id) {
+              if (mounted) {
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'QR Code does not match the active session.',
+                    ),
+                    backgroundColor: Theme.of(this.context).colorScheme.error,
+                  ),
+                );
+              }
+              return;
+            }
+
+            // Bluetooth successfully verified or gracefully bypassed. Show confirmation prompt.
+            if (mounted) {
+              showDialog(
+                context: this.context,
+                builder: (dialogContext) => ConfirmAttendanceDialog(
+                  sessionTitle: _activeSession?.subject ?? 'Unknown Subject',
+                  sessionSubtitle: '${_activeSession?.className ?? "Class"} • ${_activeSession?.teacherName ?? "Teacher"}'
+                      '\n(${isBleVerified ? "✓ BLE Proximity Verified" : "✗ BLE Bypassed (QR-Only)"})',
+                  method: 'Hybrid',
+                  onConfirm: () async {
+                    Navigator.pop(dialogContext); // Close dialog
+
+                    final result = await _studentService.markAttendance(
+                      _activeSession!.id,
+                      'Hybrid',
+                      token: rawData,
+                    );
+                    if (mounted) {
+                      if (result != MarkAttendanceResult.failure) {
+                        _markAttendanceSuccess(result);
+                      } else {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to mark hybrid attendance.'),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  onCancel: () => Navigator.pop(dialogContext),
+                ),
+              );
             }
           },
         ),
@@ -714,27 +813,34 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
 
 class _BleCheckDialog extends StatefulWidget {
   final String? sessionId;
-  const _BleCheckDialog({this.sessionId});
+  final bool isHybrid;
+  const _BleCheckDialog({this.sessionId, this.isHybrid = false});
 
   @override
   State<_BleCheckDialog> createState() => _BleCheckDialogState();
 }
 
-class _BleCheckDialogState extends State<_BleCheckDialog> {
+class _BleCheckDialogState extends State<_BleCheckDialog> with SingleTickerProviderStateMixin {
   String _status = 'Initializing Bluetooth...';
   bool _isError = false;
   bool _isScanning = true;
   StreamSubscription? _scanSubscription;
+  late AnimationController _radarController;
 
   @override
   void initState() {
     super.initState();
+    _radarController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
     _startBleCheck();
   }
 
   @override
   void dispose() {
     _scanSubscription?.cancel();
+    _radarController.dispose();
     super.dispose();
   }
 
@@ -790,14 +896,11 @@ class _BleCheckDialogState extends State<_BleCheckDialog> {
         }
       }
 
-      if (mounted) setState(() => _status = 'Scanning for Teacher...');
+      if (mounted) setState(() => _status = 'Scanning for teacher device...');
 
       final String shortSessionId = widget.sessionId?.substring(0, 8) ?? '';
       debugPrint('BLE_SCAN: Looking for ATX:$shortSessionId (sessionId=${widget.sessionId})');
 
-      // IMPORTANT: Do NOT use withServices filter — it is unreliable across
-      // Android devices when the advertiser uses flutter_ble_peripheral.
-      // Instead, scan for ALL devices and filter by name prefix in software.
       await FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 15),
         androidScanMode: AndroidScanMode.lowLatency,
@@ -819,26 +922,15 @@ class _BleCheckDialogState extends State<_BleCheckDialog> {
 
           bool match = false;
 
-          if (shortSessionId.isNotEmpty && detectedName == 'ATX:$shortSessionId') {
+          if (shortSessionId.isNotEmpty && detectedName.contains('ATX:$shortSessionId')) {
             match = true;
-          } else if (shortSessionId.isEmpty && detectedName.startsWith('ATX:')) {
+          } else if (shortSessionId.isEmpty && detectedName.contains('ATX:')) {
             match = true;
           }
 
           if (match) {
             debugPrint('BLE_SCAN: ✅ MATCH FOUND! name=$detectedName rssi=${r.rssi}');
-            
-            // Validate Proximity
-            if (r.rssi < -85) {
-              // Too far away (adjustable threshold)
-              if (mounted) {
-                setState(
-                  () => _status =
-                      'Found Teacher (signal: ${r.rssi}dBm), but you are too far away. Move closer...',
-                );
-              }
-              continue;
-            }
+            // Proximity check is relaxed for zero-resistance marking as requested by the user
             beaconFound = true;
             FlutterBluePlus.stopScan();
             String? foundId = widget.sessionId;
@@ -882,32 +974,225 @@ class _BleCheckDialogState extends State<_BleCheckDialog> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Bluetooth Proximity'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_isScanning)
-            const CircularProgressIndicator()
-          else if (_isError)
-            const Icon(Icons.error_outline, color: Colors.orange, size: 48)
-          else
-            const Icon(Icons.bluetooth_searching, size: 48, color: Colors.blue),
+  Widget _buildRadarAnimation(ThemeData theme) {
+    return AnimatedBuilder(
+      animation: _radarController,
+      builder: (context, child) {
+        return SizedBox(
+          height: 120,
+          width: 120,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Ripple 1
+              Opacity(
+                opacity: (1.0 - _radarController.value),
+                child: Transform.scale(
+                  scale: 0.5 + 0.8 * _radarController.value,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Ripple 2
+              Opacity(
+                opacity: (1.0 - ((_radarController.value + 0.5) % 1.0)),
+                child: Transform.scale(
+                  scale: 0.5 + 0.8 * ((_radarController.value + 0.5) % 1.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Center Core
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: theme.colorScheme.primary,
+                    width: 2.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                      blurRadius: 16,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.bluetooth_searching,
+                  color: theme.colorScheme.primary,
+                  size: 24,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-          const SizedBox(height: 16),
-          Text(_status, textAlign: TextAlign.center),
+  Widget _buildErrorIndicator(ThemeData theme) {
+    return SizedBox(
+      height: 120,
+      width: 120,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: theme.colorScheme.error.withValues(alpha: 0.1),
+              border: Border.all(
+                color: theme.colorScheme.error,
+                width: 2.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.colorScheme.error.withValues(alpha: 0.25),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.error_outline,
+              color: theme.colorScheme.error,
+              size: 36,
+            ),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, null),
-          child: const Text('Cancel'),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final indicatorColor = _isError ? theme.colorScheme.error : theme.colorScheme.primary;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(
+              maxWidth: 400,
+              maxHeight: 380,
+            ),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: indicatorColor.withValues(alpha: 0.35),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  blurRadius: 24,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'BLE PROXIMITY SCAN',
+                  style: GoogleFonts.orbitron(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2.0,
+                    color: indicatorColor,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (_isScanning)
+                  _buildRadarAnimation(theme)
+                else if (_isError)
+                  _buildErrorIndicator(theme)
+                else
+                  const Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+                
+                const SizedBox(height: 24),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      _status,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.4,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, null),
+                      child: const Text('CANCEL'),
+                    ),
+                    if (widget.isHybrid) ...[
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context, 'HYBRID_QR_FALLBACK');
+                        },
+                        icon: const Icon(Icons.qr_code, size: 16, color: Colors.white),
+                        label: const Text('USE QR CODE'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.secondary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                    if (_isError) ...[
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: _startBleCheck,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('RETRY'),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        if (_isError)
-          ElevatedButton(onPressed: _startBleCheck, child: const Text('Retry')),
-      ],
+      ),
     );
   }
 }

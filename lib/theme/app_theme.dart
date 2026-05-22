@@ -2,31 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// A class that contains all theme configurations for the educational attendance application.
-/// Implements Neon UI Theme with vibrant glowing effects and modern aesthetics.
+/// Implements Minimal Cyberpunk Theme with vibrant glowing effects and modern aesthetics.
 class AppTheme {
   AppTheme._();
 
-  // Premium Modern Dark Theme - Light Mode (which we will map to dark)
-  static const Color primaryLight = Color(0xFF6366F1); // Indigo 500
-  static const Color primaryVariantLight = Color(0xFF4F46E5); // Indigo 600
-  static const Color secondaryLight = Color(0xFF10B981); // Emerald 500
-  static const Color secondaryVariantLight = Color(0xFF059669); // Emerald 600
-  static const Color backgroundLight = Color(0xFF0F172A); // Slate 900
-  static const Color surfaceLight = Color(0xFF1E293B); // Slate 800
-  static const Color errorLight = Color(0xFFEF4444); // Red 500
-  static const Color warningLight = Color(0xFFF59E0B); // Amber 500
-  static const Color infoLight = Color(0xFF3B82F6); // Blue 500
-  static const Color successLight = Color(0xFF10B981); // Emerald 500
-  static const Color onPrimaryLight = Color(0xFFFFFFFF);
+  // Minimal Cyberpunk Theme - Colors
+  static const Color primaryLight = Color(0xFF00F5FF); // Electric Cyan
+  static const Color primaryVariantLight = Color(0xFF38BDF8); // Icy Blue
+  static const Color secondaryLight = Color(0xFF7C3AED); // Neon Purple
+  static const Color secondaryVariantLight = Color(0xFF6D28D9); // Darker Purple
+  static const Color backgroundLight = Color(0xFF0A0F1F); // Deep Navy Black
+  static const Color surfaceLight = Color(0xFF111827); // Dark Slate
+  static const Color errorLight = Color(0xFFEF4444); // Red
+  static const Color warningLight = Color(0xFFF59E0B); // Amber
+  static const Color infoLight = Color(0xFF38BDF8); // Icy Blue
+  static const Color successLight = Color(0xFF10B981); // Emerald
+  static const Color onPrimaryLight = Color(0xFF0A0F1F); // Contrast on Electric Cyan
   static const Color onSecondaryLight = Color(0xFFFFFFFF);
   static const Color onBackgroundLight = Color(0xFFF8FAFC); // Slate 50
   static const Color onSurfaceLight = Color(0xFFF1F5F9); // Slate 100
   static const Color onErrorLight = Color(0xFFFFFFFF);
-  static const Color accentPink = Color(0xFFEC4899); // Pink 500
-  static const Color accentPurple = Color(0xFF8B5CF6); // Violet 500
-  static const Color accentOrange = Color(0xFFF97316); // Orange 500
+  static const Color accentPink = Color(0xFFEC4899); // Pink
+  static const Color accentPurple = Color(0xFF7C3AED); // Neon Purple
+  static const Color accentOrange = Color(0xFFF97316); // Orange
 
-  // Premium Modern Dark Theme - Dark Mode Colors
+  // Premium Modern Dark Theme - Dark Mode Colors (same as Cyberpunk)
   static const Color primaryDark = primaryLight;
   static const Color primaryVariantDark = primaryVariantLight;
   static const Color secondaryDark = secondaryLight;
@@ -50,23 +50,23 @@ class AppTheme {
   static const Color dialogDark = surfaceDark;
 
   // Shadow colors
-  static const Color shadowLight = Color(0x33000000);
-  static const Color shadowDark = Color(0x33000000);
+  static const Color shadowLight = Color(0x66000000);
+  static const Color shadowDark = Color(0x66000000);
 
   // Divider and border colors
-  static const Color dividerLight = Color(0xFF334155); // Slate 700
-  static const Color dividerDark = Color(0xFF334155);
+  static const Color dividerLight = Color(0xFF1F2937); // Dark Slate border
+  static const Color dividerDark = Color(0xFF1F2937);
 
   // Text colors
   static const Color textHighEmphasisLight = Color(0xFFF8FAFC);
-  static const Color textMediumEmphasisLight = Color(0xFF94A3B8); // Slate 400
-  static const Color textDisabledLight = Color(0xFF475569); // Slate 600
+  static const Color textMediumEmphasisLight = Color(0xFF9CA3AF); // Gray 400
+  static const Color textDisabledLight = Color(0xFF4B5563); // Gray 600
 
   static const Color textHighEmphasisDark = Color(0xFFF8FAFC);
-  static const Color textMediumEmphasisDark = Color(0xFF94A3B8);
-  static const Color textDisabledDark = Color(0xFF475569);
+  static const Color textMediumEmphasisDark = Color(0xFF9CA3AF);
+  static const Color textDisabledDark = Color(0xFF4B5563);
 
-  /// Neon theme optimized for modern aesthetics
+  /// Cyberpunk theme optimized for modern aesthetics
   static ThemeData lightTheme = ThemeData(
     brightness: Brightness.dark,
     useMaterial3: true,
@@ -81,9 +81,9 @@ class AppTheme {
       secondaryContainer: secondaryVariantLight,
       onSecondaryContainer: onSecondaryLight,
       tertiary: accentPurple,
-      onTertiary: onPrimaryLight,
+      onTertiary: onSecondaryLight,
       tertiaryContainer: accentPink,
-      onTertiaryContainer: onPrimaryLight,
+      onTertiaryContainer: onSecondaryLight,
       error: errorLight,
       onError: onErrorLight,
       errorContainer: Color(0xFF4D0010),
@@ -94,22 +94,22 @@ class AppTheme {
       outline: dividerLight,
       outlineVariant: primaryVariantLight,
       shadow: shadowLight,
-      scrim: Color(0x80000000),
+      scrim: Color(0xAA000000),
       inverseSurface: Color(0xFFFFFFFF),
-      onInverseSurface: Color(0xFF0A0E27),
-      inversePrimary: Color(0xFF0A0E27),
+      onInverseSurface: Color(0xFF0A0F1F),
+      inversePrimary: Color(0xFF0A0F1F),
       surfaceTint: primaryLight,
     ),
     scaffoldBackgroundColor: backgroundLight,
     cardColor: cardLight,
     dividerColor: dividerLight,
     appBarTheme: AppBarThemeData(
-      backgroundColor: surfaceLight,
+      backgroundColor: Colors.transparent,
       foregroundColor: primaryLight,
       elevation: 0,
       centerTitle: true,
-      titleTextStyle: GoogleFonts.rajdhani(
-        fontSize: 20,
+      titleTextStyle: GoogleFonts.orbitron(
+        fontSize: 18,
         fontWeight: FontWeight.w700,
         color: primaryLight,
         letterSpacing: 2.0,
@@ -122,7 +122,7 @@ class AppTheme {
       shadowColor: shadowLight,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
-        side: BorderSide(color: primaryLight.withValues(alpha: 0.3), width: 1),
+        side: BorderSide(color: primaryLight.withValues(alpha: 0.15), width: 1.5),
       ),
       margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
     ),
@@ -132,20 +132,23 @@ class AppTheme {
       unselectedItemColor: textMediumEmphasisLight,
       elevation: 0,
       type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: GoogleFonts.rajdhani(
-        fontSize: 12,
+      selectedLabelStyle: GoogleFonts.inter(
+        fontSize: 11,
         fontWeight: FontWeight.w600,
       ),
-      unselectedLabelStyle: GoogleFonts.rajdhani(
-        fontSize: 12,
+      unselectedLabelStyle: GoogleFonts.inter(
+        fontSize: 11,
         fontWeight: FontWeight.w400,
       ),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: secondaryLight,
-      foregroundColor: onSecondaryLight,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      backgroundColor: primaryLight,
+      foregroundColor: onPrimaryLight,
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+        side: BorderSide(color: primaryLight.withValues(alpha: 0.3), width: 1.5),
+      ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -156,13 +159,14 @@ class AppTheme {
         minimumSize: Size(88, 48),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
+          side: BorderSide(color: primaryLight.withValues(alpha: 0.3), width: 1.5),
         ),
-        textStyle: GoogleFonts.rajdhani(
-          fontSize: 14,
+        textStyle: GoogleFonts.inter(
+          fontSize: 13,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.5,
         ),
-        shadowColor: primaryLight.withValues(alpha: 0.5),
+        shadowColor: primaryLight.withValues(alpha: 0.4),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -174,8 +178,8 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
-        textStyle: GoogleFonts.rajdhani(
-          fontSize: 14,
+        textStyle: GoogleFonts.inter(
+          fontSize: 13,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.5,
         ),
@@ -189,35 +193,35 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
-        textStyle: GoogleFonts.rajdhani(
+        textStyle: GoogleFonts.inter(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          letterSpacing: 1.5,
+          letterSpacing: 1.0,
         ),
       ),
     ),
     textTheme: _buildTextTheme(isLight: true),
     inputDecorationTheme: InputDecorationThemeData(
-      fillColor: surfaceLight,
+      fillColor: backgroundLight,
       filled: true,
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(
-          color: primaryLight.withValues(alpha: 0.5),
+          color: primaryLight.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(
-          color: primaryLight.withValues(alpha: 0.5),
+          color: primaryLight.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
-        borderSide: BorderSide(color: primaryLight, width: 2.5),
+        borderSide: BorderSide(color: primaryLight, width: 2.0),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
@@ -225,7 +229,7 @@ class AppTheme {
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
-        borderSide: BorderSide(color: errorLight, width: 2.5),
+        borderSide: BorderSide(color: errorLight, width: 2.0),
       ),
       labelStyle: GoogleFonts.inter(
         color: textMediumEmphasisLight,
@@ -297,7 +301,7 @@ class AppTheme {
         fontWeight: FontWeight.w600,
       ),
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      side: BorderSide(color: primaryLight.withValues(alpha: 0.5), width: 1),
+      side: BorderSide(color: primaryLight.withValues(alpha: 0.3), width: 1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     ),
     dialogTheme: DialogThemeData(
@@ -306,11 +310,11 @@ class AppTheme {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: primaryLight.withValues(alpha: 0.5),
+          color: primaryLight.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
-      titleTextStyle: GoogleFonts.rajdhani(
+      titleTextStyle: GoogleFonts.inter(
         fontSize: 20,
         fontWeight: FontWeight.w700,
         color: primaryLight,
@@ -328,7 +332,7 @@ class AppTheme {
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: primaryLight.withValues(alpha: 0.5), width: 1),
+        side: BorderSide(color: primaryLight.withValues(alpha: 0.3), width: 1.5),
       ),
       behavior: SnackBarBehavior.floating,
     ),
@@ -336,12 +340,12 @@ class AppTheme {
       labelColor: primaryLight,
       unselectedLabelColor: textMediumEmphasisLight,
       indicatorColor: primaryLight,
-      labelStyle: GoogleFonts.rajdhani(
-        fontSize: 14,
+      labelStyle: GoogleFonts.inter(
+        fontSize: 13,
         fontWeight: FontWeight.w700,
       ),
-      unselectedLabelStyle: GoogleFonts.rajdhani(
-        fontSize: 14,
+      unselectedLabelStyle: GoogleFonts.inter(
+        fontSize: 13,
         fontWeight: FontWeight.w400,
       ),
     ),
@@ -350,15 +354,15 @@ class AppTheme {
         color: surfaceLight,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: primaryLight.withValues(alpha: 0.5),
+          color: primaryLight.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
       textStyle: GoogleFonts.inter(color: textHighEmphasisLight, fontSize: 12),
     ),
     dividerTheme: DividerThemeData(
-      color: dividerLight.withValues(alpha: 0.3),
-      thickness: 1,
+      color: dividerLight.withValues(alpha: 0.5),
+      thickness: 1.5,
       space: 1,
     ),
     iconTheme: IconThemeData(color: primaryLight, size: 24),
@@ -367,7 +371,7 @@ class AppTheme {
   /// Dark theme (same as light for neon effect)
   static ThemeData darkTheme = lightTheme;
 
-  /// Build text theme with neon aesthetics
+  /// Build text theme with cyberpunk aesthetics
   static TextTheme _buildTextTheme({required bool isLight}) {
     final baseColor = isLight ? textHighEmphasisLight : textHighEmphasisDark;
     final mediumColor = isLight
@@ -375,37 +379,37 @@ class AppTheme {
         : textMediumEmphasisDark;
 
     return TextTheme(
-      displayLarge: GoogleFonts.rajdhani(
+      displayLarge: GoogleFonts.orbitron(
         fontSize: 57,
         fontWeight: FontWeight.w700,
         color: primaryLight,
         letterSpacing: 1.5,
       ),
-      displayMedium: GoogleFonts.rajdhani(
+      displayMedium: GoogleFonts.orbitron(
         fontSize: 45,
         fontWeight: FontWeight.w700,
         color: primaryLight,
         letterSpacing: 1.2,
       ),
-      displaySmall: GoogleFonts.rajdhani(
+      displaySmall: GoogleFonts.orbitron(
         fontSize: 36,
         fontWeight: FontWeight.w700,
         color: primaryLight,
         letterSpacing: 1.0,
       ),
-      headlineLarge: GoogleFonts.rajdhani(
+      headlineLarge: GoogleFonts.inter(
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: baseColor,
         letterSpacing: 0.8,
       ),
-      headlineMedium: GoogleFonts.rajdhani(
+      headlineMedium: GoogleFonts.inter(
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: baseColor,
         letterSpacing: 0.5,
       ),
-      headlineSmall: GoogleFonts.rajdhani(
+      headlineSmall: GoogleFonts.inter(
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: baseColor,

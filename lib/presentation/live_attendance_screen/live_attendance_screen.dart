@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../widgets/cyber_grid_background.dart';
 import './widgets/session_header_widget.dart';
 import './widgets/attendance_counter_widget.dart';
 import './widgets/qr_code_display_widget.dart';
@@ -15,6 +16,7 @@ import 'dart:io'; // For Platform check
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter_blue_plus/flutter_blue_plus.dart'; // For Adapter State
 import 'package:permission_handler/permission_handler.dart';
+import '../../core/responsive.dart';
 
 class LiveAttendanceScreen extends StatefulWidget {
   const LiveAttendanceScreen({super.key});
@@ -296,20 +298,25 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CustomAppBar(title: 'Live Attendance', centerTitle: true),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _attendanceStream,
-        builder: (context, snapshot) {
-          final attendanceList = snapshot.data ?? [];
+      body: CyberGridBackground(
+        child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _attendanceStream,
+          builder: (context, snapshot) {
+            final attendanceList = snapshot.data ?? [];
 
-          final List<Map<String, dynamic>> students = attendanceList.map((a) {
-            return {
-              'name': a['student_name'] ?? 'Student',
-              'rollNumber': a['roll_number'] ?? 'N/A',
-              'isPresent': true,
-              'timestamp': _formatMarkedAt(a['marked_at']),
-              'verificationMethod': a['verification_method'],
-            };
-          }).toList();
+            final List<Map<String, dynamic>> students = attendanceList.map((a) {
+              return {
+                'name': a['student_name'] ?? 'Student',
+                'rollNumber': a['roll_number'] ?? 'N/A',
+                'isPresent': true,
+                'timestamp': _formatMarkedAt(a['marked_at']),
+                'verificationMethod': a['verification_method'],
+              };
+            }).toList();
+
+          if (Responsive.isDesktop(context)) {
+            return _buildDesktopLayout(theme, subject, className, mode, args, students);
+          }
 
           return NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -460,12 +467,102 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
                 ),
 
                 // Student List Tab
-                StudentListWidget(students: students, onRefresh: () {}),
+                        StudentListWidget(students: students, onRefresh: () {}),
               ],
             ),
           );
         },
       ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout(
+    ThemeData theme,
+    String subject,
+    String className,
+    String mode,
+    Map<String, dynamic>? args,
+    List<Map<String, dynamic>> students,
+  ) {
+    final colorScheme = theme.colorScheme;
+    
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left Side: Student List & Header
+        Expanded(
+          flex: 5,
+          child: Container(
+            margin: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: colorScheme.primary.withOpacity(0.2), width: 1.5),
+            ),
+            child: Column(
+              children: [
+                SessionHeaderWidget(
+                  subject: subject,
+                  className: className,
+                  section: 'A',
+                  elapsedTime: _formatElapsedTime(_elapsedSeconds),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: AttendanceCounterWidget(
+                    presentCount: students.length,
+                    totalCount: args?['totalStudents'] ?? 50,
+                  ),
+                ),
+                const Divider(),
+                Expanded(
+                  child: StudentListWidget(students: students, onRefresh: () {}),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Right Side: QR & Controls
+        Expanded(
+          flex: 4,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                if (mode == 'QR' || mode == 'Hybrid' || mode == 'QR Code')
+                  QrCodeDisplayWidget(
+                    qrData: _isPaused ? 'SESSION PAUSED' : (_qrToken.isEmpty ? 'Loading...' : _qrToken),
+                    remainingSeconds: _qrRemainingSeconds,
+                    onRefresh: () {
+                      if (!_isPaused && args?['sessionId'] != null) {
+                        _lastWindowId = -1;
+                        _generateQrToken(args!['sessionId']);
+                      }
+                    },
+                  ),
+                if (mode == 'Bluetooth' || mode == 'Hybrid')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: BluetoothStatusWidget(
+                      isBroadcasting: _isBroadcasting,
+                      connectedDevices: students.where((s) => s['verificationMethod'] == 'Bluetooth').length,
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                SessionControlPanelWidget(
+                  isPaused: _isPaused,
+                  onPauseSession: _togglePauseSession,
+                  onEndSession: () => _showEndSessionDialog(args?['sessionId']),
+                  onExtendTime: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Session time extended!')));
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

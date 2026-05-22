@@ -3,14 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../widgets/custom_icon_widget.dart';
+import '../../core/app_export.dart';
 import '../../services/auth_service.dart';
 import '../../routes/app_routes.dart';
 import 'widgets/role_selection_dialog.dart';
 
-/// Login Screen for AttendEase
-/// Implements Google Sign-In authentication with college email validation
-/// Optimized for educational institution access with institutional branding
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,13 +15,8 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _glowAnimation;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -34,37 +26,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _formKey = GlobalKey<FormState>();
 
   @override
-  void initState() {
-    super.initState();
-    _initializeAnimations();
-  }
-
-  void _initializeAnimations() {
-    _animationController = AnimationController(
-      duration: Duration(milliseconds: 2000),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
-    _slideAnimation = Tween<Offset>(begin: Offset(0, 0.3), end: Offset.zero)
-        .animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: Curves.easeOutCubic,
-          ),
-        );
-
-    _glowAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
   void dispose() {
-    _animationController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
@@ -95,7 +57,6 @@ class _LoginScreenState extends State<LoginScreen>
         if (role == 'teacher') {
           Navigator.pushReplacementNamed(context, AppRoutes.teacherDashboard);
         } else if (role == 'student') {
-          // Check if profile is complete
           final supabase = Supabase.instance.client;
           final user = supabase.auth.currentUser;
           if (user != null) {
@@ -136,13 +97,9 @@ class _LoginScreenState extends State<LoginScreen>
 
         if (!mounted) return;
 
-        // Custom message for email verification
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
             title: Row(
               children: [
                 Icon(
@@ -166,8 +123,8 @@ class _LoginScreenState extends State<LoginScreen>
         );
 
         setState(() {
-          _isLoginMode = true; // Switch back to login mode
-          _passwordController.clear(); // Clear password for security
+          _isLoginMode = true;
+          _passwordController.clear();
         });
       }
     } catch (e) {
@@ -179,7 +136,6 @@ class _LoginScreenState extends State<LoginScreen>
         errorMessage = e.toString().replaceAll('Exception:', '').trim();
       }
 
-      // Check for 'already registered'
       if (errorMessage.toLowerCase().contains('already registered')) {
         errorMessage =
             'An account with this email already exists. Please sign in instead.';
@@ -207,18 +163,15 @@ class _LoginScreenState extends State<LoginScreen>
       final response = await authService.signInWithGoogle();
 
       if (response == null) {
-        // User cancelled or failed
         if (!mounted) return;
         setState(() => _isLoading = false);
         return;
       }
 
-      // Get Role
       String? role = await authService.getUserRole();
 
       if (!mounted) return;
 
-      // Ask for role if not set (first-time Google Sign In)
       if (role == null) {
         final selectedRole = await showDialog<String>(
           context: context,
@@ -230,7 +183,6 @@ class _LoginScreenState extends State<LoginScreen>
           await authService.updateUserRole(selectedRole);
           role = selectedRole;
         } else {
-          // If they dismissed the dialog (somehow) or failed, fall back
           role = 'student';
           await authService.updateUserRole(role);
         }
@@ -241,7 +193,6 @@ class _LoginScreenState extends State<LoginScreen>
       if (role == 'teacher') {
         Navigator.pushReplacementNamed(context, AppRoutes.teacherDashboard);
       } else {
-        // Check if profile is complete
         final supabase = Supabase.instance.client;
         final user = supabase.auth.currentUser;
         if (user != null) {
@@ -280,7 +231,6 @@ class _LoginScreenState extends State<LoginScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Row(
           children: [
             Icon(
@@ -288,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen>
               color: Theme.of(context).colorScheme.error,
               size: 24,
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(title, style: Theme.of(context).textTheme.titleLarge),
             ),
@@ -298,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -314,21 +264,10 @@ class _LoginScreenState extends State<LoginScreen>
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        // Exit app when back button pressed from login screen
         SystemNavigator.pop();
       },
       child: Scaffold(
-        backgroundColor: colorScheme.surface,
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [theme.scaffoldBackgroundColor, colorScheme.surface, theme.scaffoldBackgroundColor],
-            ),
-          ),
+        body: CyberGridBackground(
           child: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -336,16 +275,12 @@ class _LoginScreenState extends State<LoginScreen>
                 if (constraints.maxWidth > 900) {
                   return Row(
                     children: [
-                      // Left Side: Branding
+                      // Left Side: Branding Hero
                       Expanded(
                         flex: 5,
-                        child: Center(
-                          child: SingleChildScrollView(
-                            child: _buildBrandingSection(theme, colorScheme),
-                          ),
-                        ),
+                        child: _buildDesktopBrandingSection(theme, colorScheme),
                       ),
-                      // Right Side: Auth Form (Glassmorphic)
+                      // Right Side: Auth Form (Glassmorphic Card)
                       Expanded(
                         flex: 4,
                         child: Center(
@@ -354,30 +289,28 @@ class _LoginScreenState extends State<LoginScreen>
                               margin: const EdgeInsets.all(24),
                               padding: const EdgeInsets.all(40),
                               decoration: BoxDecoration(
-                                color: colorScheme.surface.withValues(
-                                  alpha: 0.1,
-                                ),
+                                color: colorScheme.surface.withOpacity(0.4),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.2,
-                                  ),
+                                  color: colorScheme.primary.withOpacity(0.2),
                                   width: 1.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.3),
+                                    color: Colors.black.withOpacity(0.4),
                                     blurRadius: 40,
                                     spreadRadius: 5,
+                                  ),
+                                  BoxShadow(
+                                    color: colorScheme.primary.withOpacity(0.03),
+                                    blurRadius: 20,
+                                    spreadRadius: 1,
                                   ),
                                 ],
                               ),
                               child: ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: 400),
-                                child: _buildAuthenticationSection(
-                                  theme,
-                                  colorScheme,
-                                ),
+                                constraints: const BoxConstraints(maxWidth: 400),
+                                child: _buildAuthenticationSection(theme, colorScheme),
                               ),
                             ),
                           ),
@@ -388,15 +321,12 @@ class _LoginScreenState extends State<LoginScreen>
                 }
 
                 // Mobile/Tablet Layout (Centered)
-                return SingleChildScrollView(
-                  physics: BouncingScrollPhysics(),
-                  child: Center(
+                return Center(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: 600),
+                      constraints: const BoxConstraints(maxWidth: 600),
                       child: Container(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
-                        ),
                         padding: EdgeInsets.symmetric(
                           horizontal: 6.w,
                           vertical: 4.h,
@@ -405,11 +335,29 @@ class _LoginScreenState extends State<LoginScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            SizedBox(height: 4.h),
+                            SizedBox(height: 2.h),
                             _buildBrandingSection(theme, colorScheme),
-                            SizedBox(height: 6.h),
-                            _buildAuthenticationSection(theme, colorScheme),
                             SizedBox(height: 4.h),
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surface.withOpacity(0.4),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: colorScheme.primary.withOpacity(0.15),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    blurRadius: 30,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: _buildAuthenticationSection(theme, colorScheme),
+                            ).animate().fadeIn(duration: 600.ms, curve: Curves.easeOut).slideY(begin: 0.1, end: 0),
+                            SizedBox(height: 3.h),
                             _buildFooterSection(theme, colorScheme),
                           ],
                         ),
@@ -429,47 +377,8 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       children: [
         // App Logo
-        AnimatedBuilder(
-          animation: _glowAnimation,
-          builder: (context, child) {
-            final logoSize = (SizerUtil.deviceType == DeviceType.mobile)
-                ? 120.0
-                : 180.0;
-            return Container(
-              width: logoSize,
-              height: logoSize,
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(24.0),
-                border: Border.all(color: colorScheme.primary, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(
-                      alpha: _glowAnimation.value * 0.8,
-                    ),
-                    blurRadius: 40,
-                    spreadRadius: 8,
-                  ),
-                  BoxShadow(
-                    color: colorScheme.secondary.withValues(
-                      alpha: _glowAnimation.value * 0.5,
-                    ),
-                    blurRadius: 60,
-                    spreadRadius: 15,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: CustomIconWidget(
-                  iconName: 'school',
-                  size: logoSize * 0.5,
-                  color: colorScheme.primary,
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 32),
+        const CustomLogoWidget(size: 130),
+        const SizedBox(height: 24),
 
         // App Name
         Text(
@@ -477,11 +386,11 @@ class _LoginScreenState extends State<LoginScreen>
           style: theme.textTheme.displaySmall?.copyWith(
             color: colorScheme.primary,
             fontWeight: FontWeight.bold,
-            letterSpacing: 3.0,
-            fontSize: (SizerUtil.deviceType == DeviceType.mobile) ? 28 : 36,
+            letterSpacing: 4.0,
+            
           ),
-        ),
-        const SizedBox(height: 16),
+        ).animate().fadeIn(duration: 500.ms).shimmer(duration: 1000.ms, color: colorScheme.secondary),
+        const SizedBox(height: 12),
 
         // Tagline
         ConstrainedBox(
@@ -489,17 +398,68 @@ class _LoginScreenState extends State<LoginScreen>
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'Smart Attendance Management for Educational Institutions',
+              'Secure Attendance Marking & AI-Powered Live Analytics',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: colorScheme.secondary,
+                color: colorScheme.onSurfaceVariant,
                 height: 1.4,
                 letterSpacing: 0.8,
               ),
             ),
           ),
-        ),
+        ).animate().fadeIn(delay: 200.ms, duration: 500.ms),
       ],
+    );
+  }
+
+  Widget _buildDesktopBrandingSection(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: const AssetImage('assets/images/oursplash.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            theme.scaffoldBackgroundColor.withOpacity(0.8),
+            BlendMode.darken,
+          ),
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CustomLogoWidget(size: 160),
+            const SizedBox(height: 32),
+            Text(
+              'AttendEase',
+              style: theme.textTheme.displayMedium?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 4.0,
+                
+                shadows: [
+                  Shadow(color: colorScheme.primary.withOpacity(0.5), blurRadius: 20),
+                ],
+              ),
+            ).animate().fadeIn(duration: 800.ms).shimmer(duration: 2000.ms, color: colorScheme.secondary),
+            const SizedBox(height: 16),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Text(
+                'Secure Attendance Marking & AI-Powered Live Analytics',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.white70,
+                  height: 1.5,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ).animate().fadeIn(delay: 400.ms, duration: 800.ms),
+          ],
+        ),
+      ),
     );
   }
 
@@ -507,83 +467,79 @@ class _LoginScreenState extends State<LoginScreen>
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Name Field (Sign Up only)
-          AnimatedCrossFade(
-            firstChild: Container(),
-            secondChild: Column(
-              children: [
-                _buildTextField(
-                  controller: _nameController,
-                  label: 'Full Name',
-                  icon: 'person',
-                  theme: theme,
-                  colorScheme: colorScheme,
-                  validator: (val) =>
-                      !_isLoginMode && (val == null || val.isEmpty)
+          // Name Field & Role Selector (Sign Up only)
+          if (!_isLoginMode) ...[
+            _buildTextField(
+              controller: _nameController,
+              label: 'Full Name',
+              icon: Icons.person_outline,
+              theme: theme,
+              colorScheme: colorScheme,
+              validator: (val) =>
+                  !_isLoginMode && (val == null || val.isEmpty)
                       ? 'Name is required'
                       : null,
+            ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
+            const SizedBox(height: 16),
+            
+            // Cyber Role Selector
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.primary.withOpacity(0.3),
+                  width: 1.5,
                 ),
-                SizedBox(height: 2.h),
-                // Role Selector
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: colorScheme.outline.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedRole,
-                      isExpanded: true,
-                      dropdownColor: colorScheme.surface,
-                      items: ['student', 'teacher'].map((role) {
-                        return DropdownMenuItem(
-                          value: role,
-                          child: Row(
-                            children: [
-                              CustomIconWidget(
-                                iconName: role == 'student'
-                                    ? 'school'
-                                    : 'person_outline',
-                                size: 20,
-                                color: colorScheme.primary,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                role[0].toUpperCase() + role.substring(1),
-                                style: theme.textTheme.bodyLarge,
-                              ),
-                            ],
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedRole,
+                  isExpanded: true,
+                  dropdownColor: colorScheme.surface,
+                  items: ['student', 'teacher'].map((role) {
+                    return DropdownMenuItem(
+                      value: role,
+                      child: Row(
+                        children: [
+                          Icon(
+                            role == 'student'
+                                ? Icons.school_outlined
+                                : Icons.badge_outlined,
+                            size: 20,
+                            color: colorScheme.primary,
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedRole = val);
-                      },
-                    ),
-                  ),
+                          const SizedBox(width: 12),
+                          Text(
+                            role[0].toUpperCase() + role.substring(1),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedRole = val);
+                  },
                 ),
-                const SizedBox(height: 16),
-              ],
-            ),
-            crossFadeState: _isLoginMode
-                ? CrossFadeState.showFirst
-                : CrossFadeState.showSecond,
-            duration: Duration(milliseconds: 300),
-          ),
+              ),
+            ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
+            const SizedBox(height: 16),
+          ],
 
           // Email Field
           _buildTextField(
             controller: _emailController,
             label: 'Email Address',
-            icon: 'email',
+            icon: Icons.email_outlined,
             theme: theme,
             colorScheme: colorScheme,
             validator: (val) {
@@ -592,14 +548,14 @@ class _LoginScreenState extends State<LoginScreen>
               return null;
             },
             autofillHints: const [AutofillHints.email],
-          ),
+          ).animate().fadeIn(delay: 100.ms, duration: 300.ms).slideY(begin: 0.1, end: 0),
           const SizedBox(height: 16),
 
           // Password Field
           _buildTextField(
             controller: _passwordController,
             label: 'Password',
-            icon: 'lock',
+            icon: Icons.lock_outline_rounded,
             isPassword: true,
             theme: theme,
             colorScheme: colorScheme,
@@ -610,7 +566,6 @@ class _LoginScreenState extends State<LoginScreen>
                   return 'Password must be at least 6 characters';
                 }
               } else {
-                // Password strength for Sign Up
                 if (val.length < 8) return 'Minimum 8 characters required';
                 if (!RegExp(r'(?=.*[a-z])').hasMatch(val)) {
                   return 'Must contain a lowercase letter';
@@ -628,22 +583,22 @@ class _LoginScreenState extends State<LoginScreen>
               return null;
             },
             autofillHints: const [AutofillHints.password],
-          ),
+          ).animate().fadeIn(delay: 200.ms, duration: 300.ms).slideY(begin: 0.1, end: 0),
           const SizedBox(height: 24),
 
           // Auth Button (Sign In / Sign Up)
           SizedBox(
-            width: double.infinity,
             height: 52,
             child: ElevatedButton(
               onPressed: _isLoading ? null : _handleEmailAuth,
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
+                elevation: 8,
+                shadowColor: colorScheme.primary.withOpacity(0.3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 4,
               ),
               child: _isLoading
                   ? SizedBox(
@@ -655,16 +610,18 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     )
                   : Text(
-                      _isLoginMode ? 'Sign In' : 'Create Account',
+                      _isLoginMode ? 'INITIALIZE SESSION' : 'REGISTER PROFILE',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        
+                        letterSpacing: 1.5,
                       ),
                     ),
             ),
-          ),
+          ).animate().fadeIn(delay: 300.ms, duration: 300.ms).slideY(begin: 0.1, end: 0),
           const SizedBox(height: 16),
 
-          // Toggle Mode
+          // Toggle Mode Link
           TextButton(
             onPressed: () {
               setState(() {
@@ -675,77 +632,85 @@ class _LoginScreenState extends State<LoginScreen>
             child: Text.rich(
               TextSpan(
                 text: _isLoginMode
-                    ? "Don't have an account? "
-                    : "Already have an account? ",
+                    ? "New Operator? "
+                    : "Existing Operator? ",
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: colorScheme.onSurface.withOpacity(0.7),
                 ),
                 children: [
                   TextSpan(
-                    text: _isLoginMode ? 'Sign Up' : 'Sign In',
+                    text: _isLoginMode ? 'Register Here' : 'Sign In Here',
                     style: TextStyle(
                       color: colorScheme.primary,
                       fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Divider
           Row(
             children: [
               Expanded(
                 child: Divider(
-                  color: colorScheme.outline.withValues(alpha: 0.3),
+                  color: colorScheme.primary.withOpacity(0.15),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'OR',
+                  'OR SECURE HUB ACCESS',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    color: colorScheme.onSurface.withOpacity(0.5),
+                    
+                    letterSpacing: 1.0,
                   ),
                 ),
               ),
               Expanded(
                 child: Divider(
-                  color: colorScheme.outline.withValues(alpha: 0.3),
+                  color: colorScheme.primary.withOpacity(0.15),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // Google Sign-In Button (Secondary)
+          // Google Sign-In Button
           OutlinedButton(
             onPressed: _isLoading ? null : _handleGoogleSignIn,
             style: OutlinedButton.styleFrom(
               side: BorderSide(
-                color: colorScheme.outline.withValues(alpha: 0.3),
+                color: colorScheme.secondary.withOpacity(0.4),
+                width: 1.5,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               padding: const EdgeInsets.symmetric(vertical: 12),
+              foregroundColor: colorScheme.secondary,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CustomIconWidget(
-                  iconName:
-                      'login', // Reusing login icon, ideally use google brand icon
+                Icon(
+                  Icons.vpn_key_outlined,
                   size: 20,
-                  color: colorScheme.onSurface,
+                  color: colorScheme.secondary,
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Continue with Google',
+                  'AUTHENTICATE WITH GOOGLE',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
+                    
+                    fontSize: 13,
+                    letterSpacing: 1.0,
+                    color: colorScheme.secondary,
                   ),
                 ),
               ],
@@ -759,7 +724,7 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
-    required String icon,
+    required IconData icon,
     required ThemeData theme,
     required ColorScheme colorScheme,
     bool isPassword = false,
@@ -769,37 +734,34 @@ class _LoginScreenState extends State<LoginScreen>
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
-      style: theme.textTheme.bodyLarge,
+      style: theme.textTheme.bodyLarge?.copyWith(
+        
+      ),
       validator: validator,
       autofillHints: autofillHints,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Padding(
-          padding: EdgeInsets.all(12),
-          child: CustomIconWidget(
-            iconName: icon,
-            size: 20,
-            color: colorScheme.primary,
-          ),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.3),
-          ),
+        prefixIcon: Icon(
+          icon,
+          size: 20,
+          color: colorScheme.primary,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.3),
+            color: colorScheme.primary.withOpacity(0.2),
+            width: 1.5,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.primary, width: 2),
+          borderSide: BorderSide(
+            color: colorScheme.primary,
+            width: 2,
+          ),
         ),
         filled: true,
-        fillColor: colorScheme.surface,
+        fillColor: theme.scaffoldBackgroundColor.withOpacity(0.7),
       ),
     );
   }
@@ -807,33 +769,30 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildFooterSection(ThemeData theme, ColorScheme colorScheme) {
     return Column(
       children: [
-        Divider(
-          color: colorScheme.primary.withValues(alpha: 0.3),
-          thickness: 1.5,
-        ),
-        const SizedBox(height: 16),
         Text(
-          'Secure Authentication',
+          'SECURE PROTOCOL ENABLED',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurface.withValues(alpha: 0.6),
-            letterSpacing: 1.0,
+            color: colorScheme.onSurface.withOpacity(0.4),
+            
+            letterSpacing: 1.5,
           ),
         ),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CustomIconWidget(
-              iconName: 'verified_user',
-              size: 16,
-              color: colorScheme.secondary,
+            Icon(
+              Icons.verified_user_outlined,
+              size: 14,
+              color: colorScheme.primary,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
-              'Protected by Google',
+              'End-to-End Encryption Mode',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.secondary,
+                color: colorScheme.primary,
                 fontWeight: FontWeight.w500,
+                
               ),
             ),
           ],

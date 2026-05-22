@@ -140,73 +140,96 @@ class _ProfileAvatarWidgetState extends State<ProfileAvatarWidget> {
     final theme = Theme.of(context);
 
     return Stack(
+      alignment: Alignment.center,
       children: [
+        // ── Holographic Glow Ring & Dark Backdrop ──
         Container(
+          width: widget.radius * 2 + 12,
+          height: widget.radius * 2 + 12,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
+            color: theme.colorScheme.surface.withValues(alpha: 0.8), // Dark translucent backdrop
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                blurRadius: 20,
+                spreadRadius: 2,
+              ),
+              BoxShadow(
+                color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+            ],
             border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.2),
-              width: 2,
+              color: theme.colorScheme.primary.withValues(alpha: 0.4),
+              width: 2.5, // Neon border
             ),
           ),
-          child: CircleAvatar(
-            radius: widget.radius,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            child: _isUploading
-                ? const CircularProgressIndicator()
-                : ClipOval(
-                    child: kIsWeb && _webImageBytes != null
-                        ? Image.memory(
-                            _webImageBytes!,
-                            width: widget.radius * 2,
-                            height: widget.radius * 2,
-                            fit: BoxFit.cover,
-                          )
-                        : !kIsWeb && _localFile != null && _localFile!.existsSync()
-                            ? Image.file(
-                                _localFile!,
-                                width: widget.radius * 2,
-                                height: widget.radius * 2,
-                                fit: BoxFit.cover,
-                              )
-                            : _currentImageUrl != null && _currentImageUrl!.isNotEmpty
-                                ? CustomImageWidget(
-                                    imageUrl: _currentImageUrl,
-                                    width: widget.radius * 2,
-                                    height: widget.radius * 2,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Icon(
-                                    Icons.person,
-                                    size: widget.radius,
-                                    color: theme.colorScheme.primary,
-                                  ),
-                  ),
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: CircleAvatar(
+              radius: widget.radius,
+              backgroundColor: theme.colorScheme.surface,
+              child: _isUploading
+                  ? CircularProgressIndicator(color: theme.colorScheme.primary)
+                  : ClipOval(
+                      child: kIsWeb && _webImageBytes != null
+                          ? Image.memory(
+                              _webImageBytes!,
+                              width: widget.radius * 2,
+                              height: widget.radius * 2,
+                              fit: BoxFit.cover,
+                            )
+                          : !kIsWeb && _localFile != null && _localFile!.existsSync()
+                              ? Image.file(
+                                  _localFile!,
+                                  width: widget.radius * 2,
+                                  height: widget.radius * 2,
+                                  fit: BoxFit.cover,
+                                )
+                              : _currentImageUrl != null && _currentImageUrl!.isNotEmpty
+                                  ? CustomImageWidget(
+                                      imageUrl: _currentImageUrl,
+                                      width: widget.radius * 2,
+                                      height: widget.radius * 2,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Icon(
+                                      Icons.person,
+                                      size: widget.radius,
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                                    ),
+                    ),
+            ),
           ),
         ),
+        // ── Edit Button ──
         if (widget.canEdit && !_isUploading)
           Positioned(
-            bottom: 0,
-            right: 0,
+            bottom: 4,
+            right: 4,
             child: GestureDetector(
               onTap: _pickAndUploadImage,
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
+                  color: theme.colorScheme.surface, // Dark container
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(
+                    color: theme.colorScheme.primary, 
+                    width: 1.5, // Cyan highlight
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                      blurRadius: 8,
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.camera_alt,
-                  color: Colors.white,
+                  color: theme.colorScheme.primary,
                   size: 18,
                 ),
               ),

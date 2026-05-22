@@ -85,206 +85,241 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadProfile,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // ── Hero Card ──
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                theme.colorScheme.primary,
-                                theme.colorScheme.primary.withValues(alpha: 0.7),
+          : CyberGridBackground(
+              child: RefreshIndicator(
+                onRefresh: _loadProfile,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // ── Hero Card ──
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  theme.colorScheme.surface,
+                                  Color.lerp(theme.colorScheme.surface, theme.colorScheme.primary, 0.08)!,
+                                ],
+                              ),
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                                  blurRadius: 20,
+                                  spreadRadius: -2,
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                  offset: const Offset(0, 4),
+                                ),
                               ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Column(
-                            children: [
-                              ProfileAvatarWidget(
-                                initialImageUrl: _userProfile?.avatarUrl,
-                                radius: 50,
-                                onUploadComplete: (url) {
-                                  setState(() {
-                                    _userProfile = UserModel(
-                                      id: _userProfile!.id,
-                                      email: _userProfile!.email,
-                                      role: _userProfile!.role,
-                                      name: _userProfile!.name,
-                                      avatarUrl: url,
-                                      createdAt: _userProfile!.createdAt,
-                                    );
-                                  });
-                                },
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                _userProfile?.name ?? user?.email ?? 'Student',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                user?.email ?? '',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      'STUDENT',
-                                      style: theme.textTheme.labelSmall?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
+                            child: Column(
+                              children: [
+                                ProfileAvatarWidget(
+                                  initialImageUrl: _userProfile?.avatarUrl,
+                                  radius: 50,
+                                  onUploadComplete: (url) {
+                                    setState(() {
+                                      _userProfile = UserModel(
+                                        id: _userProfile!.id,
+                                        email: _userProfile!.email,
+                                        role: _userProfile!.role,
+                                        name: _userProfile!.name,
+                                        avatarUrl: url,
+                                        createdAt: _userProfile!.createdAt,
+                                      );
+                                    });
+                                  },
+                                ).animate().scale(delay: 200.ms, duration: 500.ms, curve: Curves.easeOutBack),
+                                const SizedBox(height: 18),
+                                Text(
+                                  _userProfile?.name ?? user?.email ?? 'Student',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    color: theme.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
                                   ),
-                                  if (rollNo.isNotEmpty) ...[
-                                    const SizedBox(width: 8),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?.email ?? '',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.2),
+                                        color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: theme.colorScheme.tertiary.withValues(alpha: 0.3),
+                                          width: 1,
+                                        ),
                                       ),
                                       child: Text(
-                                        rollNo,
+                                        'STUDENT',
                                         style: theme.textTheme.labelSmall?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
+                                          color: theme.colorScheme.tertiary,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1.5,
                                         ),
                                       ),
                                     ),
+                                    if (rollNo.isNotEmpty) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          rollNo,
+                                          style: theme.textTheme.labelSmall?.copyWith(
+                                            color: theme.colorScheme.primary,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
-                                ],
+                                ),
+                              ],
+                            ),
+                          ).animate().fadeIn(duration: 600.ms, curve: Curves.easeOutCubic).slideY(begin: 0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
+
+                          const SizedBox(height: 20),
+
+                          // ── Attendance Stats Row ──
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatCard(
+                                  theme,
+                                  icon: Icons.check_circle_outline,
+                                  label: 'Present',
+                                  value: '$_totalPresent',
+                                  color: Colors.green,
+                                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildStatCard(
+                                  theme,
+                                  icon: Icons.percent,
+                                  label: 'Attendance',
+                                  value: '${_attendancePercent.toStringAsFixed(0)}%',
+                                  color: _attendancePercent >= 75
+                                      ? Colors.green
+                                      : _attendancePercent >= 50
+                                          ? Colors.orange
+                                          : Colors.red,
+                                ).animate().fadeIn(delay: 300.ms, duration: 400.ms).scale(delay: 300.ms, duration: 400.ms, curve: Curves.easeOutBack),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildStatCard(
+                                  theme,
+                                  icon: Icons.calendar_month,
+                                  label: 'Joined',
+                                  value: joinStr,
+                                  color: theme.colorScheme.tertiary,
+                                ).animate().fadeIn(delay: 400.ms, duration: 400.ms).scale(delay: 400.ms, duration: 400.ms, curve: Curves.easeOutBack),
                               ),
                             ],
                           ),
-                        ),
 
-                        const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
-                        // ── Attendance Stats Row ──
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                theme,
-                                icon: Icons.check_circle_outline,
-                                label: 'Present',
-                                value: '$_totalPresent',
-                                color: Colors.green,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildStatCard(
-                                theme,
-                                icon: Icons.percent,
-                                label: 'Attendance',
-                                value: '${_attendancePercent.toStringAsFixed(0)}%',
-                                color: _attendancePercent >= 75
-                                    ? Colors.green
-                                    : _attendancePercent >= 50
-                                        ? Colors.orange
-                                        : Colors.red,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildStatCard(
-                                theme,
-                                icon: Icons.calendar_month,
-                                label: 'Joined',
-                                value: joinStr,
-                                color: theme.colorScheme.tertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // ── Academic Information ──
-                        _buildSectionHeader(theme, 'Academic Information', Icons.school_outlined),
-                        const SizedBox(height: 12),
-
-                        InkWell(
-                          onTap: _showEditRollNumberDialog,
-                          borderRadius: BorderRadius.circular(12),
-                          child: _buildProfileItem(
-                            theme,
-                            icon: 'badge',
-                            label: 'Roll Number',
-                            value: rollNo.isNotEmpty ? rollNo : 'Tap to set',
-                            isEditable: true,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildProfileItem(
-                          theme,
-                          icon: 'class',
-                          label: 'Class',
-                          value: className,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildProfileItem(
-                          theme,
-                          icon: 'school',
-                          label: 'Department',
-                          value: _userProfile?.department ?? 'Not Set',
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // ── Account Information ──
-                        _buildSectionHeader(theme, 'Account Information', Icons.info_outline),
-                        const SizedBox(height: 12),
-                        _buildProfileItem(
-                          theme,
-                          icon: 'email',
-                          label: 'Email Address',
-                          value: user?.email ?? 'N/A',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildProfileItem(
-                          theme,
-                          icon: 'fingerprint',
-                          label: 'User ID',
-                          value: _userProfile?.id.substring(0, 8) ?? 'N/A',
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // ── Recent Attendance ──
-                        if (_attendanceHistory.isNotEmpty) ...[
-                          _buildSectionHeader(theme, 'Recent Attendance', Icons.history),
+                          // ── Academic Information ──
+                          _buildSectionHeader(theme, 'Academic Information', Icons.school_outlined)
+                              .animate().fadeIn(delay: 450.ms, duration: 300.ms).slideX(begin: -0.05, end: 0, delay: 450.ms),
                           const SizedBox(height: 12),
-                          ...(_attendanceHistory.take(5).map((a) => Padding(
+
+                          InkWell(
+                            onTap: _showEditRollNumberDialog,
+                            borderRadius: BorderRadius.circular(12),
+                            child: _buildProfileItem(
+                              theme,
+                              icon: 'badge',
+                              label: 'Roll Number',
+                              value: rollNo.isNotEmpty ? rollNo : 'Tap to set',
+                              isEditable: true,
+                            ),
+                          ).animate().fadeIn(delay: 500.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 500.ms),
+                          const SizedBox(height: 12),
+                          _buildProfileItem(
+                            theme,
+                            icon: 'class',
+                            label: 'Class',
+                            value: className,
+                          ).animate().fadeIn(delay: 550.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 550.ms),
+                          const SizedBox(height: 12),
+                          _buildProfileItem(
+                            theme,
+                            icon: 'school',
+                            label: 'Department',
+                            value: _userProfile?.department ?? 'Not Set',
+                          ).animate().fadeIn(delay: 600.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 600.ms),
+
+                          const SizedBox(height: 24),
+
+                          // ── Account Information ──
+                          _buildSectionHeader(theme, 'Account Information', Icons.info_outline)
+                              .animate().fadeIn(delay: 650.ms, duration: 300.ms).slideX(begin: -0.05, end: 0, delay: 650.ms),
+                          const SizedBox(height: 12),
+                          _buildProfileItem(
+                            theme,
+                            icon: 'email',
+                            label: 'Email Address',
+                            value: user?.email ?? 'N/A',
+                          ).animate().fadeIn(delay: 700.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 700.ms),
+                          const SizedBox(height: 12),
+                          _buildProfileItem(
+                            theme,
+                            icon: 'fingerprint',
+                            label: 'User ID',
+                            value: _userProfile?.id.substring(0, 8) ?? 'N/A',
+                          ).animate().fadeIn(delay: 750.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 750.ms),
+
+                          const SizedBox(height: 24),
+
+                          // ── Recent Attendance ──
+                          if (_attendanceHistory.isNotEmpty) ...[
+                            _buildSectionHeader(theme, 'Recent Attendance', Icons.history)
+                                .animate().fadeIn(delay: 800.ms, duration: 300.ms).slideX(begin: -0.05, end: 0, delay: 800.ms),
+                            const SizedBox(height: 12),
+                            ...(_attendanceHistory.take(5).toList().asMap().entries.map((entry) {
+                              final idx = entry.key;
+                              final a = entry.value;
+                              final itemDelay = 850.ms + (idx * 80).ms;
+                              return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
@@ -338,35 +373,37 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                                     ],
                                   ),
                                 ),
-                              ))),
-                          const SizedBox(height: 16),
-                        ],
+                              ).animate().fadeIn(delay: itemDelay, duration: 400.ms).slideX(begin: 0.05, end: 0, delay: itemDelay);
+                            })),
+                            const SizedBox(height: 16),
+                          ],
 
-                        // ── Logout Button ──
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _handleLogout,
-                            icon: _isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.logout),
-                            label: const Text('Logout'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.errorContainer,
-                              foregroundColor: theme.colorScheme.error,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          // ── Logout Button ──
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _isLoading ? null : _handleLogout,
+                              icon: _isLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.logout),
+                              label: const Text('Logout'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.errorContainer,
+                                foregroundColor: theme.colorScheme.error,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
+                          ).animate().fadeIn(delay: 950.ms, duration: 400.ms).slideY(begin: 0.2, end: 0, delay: 950.ms),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -411,9 +448,16 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.03),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Column(
         children: [

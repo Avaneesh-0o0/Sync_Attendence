@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:ui';
 
 import '../../../core/app_export.dart';
 
 /// Session control panel with pause, end, and extend time buttons
+/// Overhauled with Cyberpunk Design System
 class SessionControlPanelWidget extends StatelessWidget {
   final VoidCallback onPauseSession;
   final VoidCallback onEndSession;
@@ -22,72 +24,85 @@ class SessionControlPanelWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface.withValues(alpha: 0.6),
+            border: Border(
+              top: BorderSide(
+                color: primaryColor.withValues(alpha: 0.5),
+                width: 2,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: primaryColor.withValues(alpha: 0.1),
+                blurRadius: 15,
+                offset: const Offset(0, -5),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: _buildControlButton(
-                    context,
-                    theme,
-                    label: isPaused ? 'Resume' : 'Pause',
-                    icon: isPaused ? 'play_arrow' : 'pause',
-                    backgroundColor: AppTheme.warningLight,
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      onPauseSession();
-                    },
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildControlButton(
+                        context,
+                        theme,
+                        label: isPaused ? 'RESUME SECURE LINK' : 'PAUSE SECURE LINK',
+                        icon: isPaused ? Icons.play_arrow : Icons.pause,
+                        backgroundColor: AppTheme.warningLight,
+                        borderColor: AppTheme.warningLight.withValues(alpha: 0.5),
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          onPauseSession();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildControlButton(
+                        context,
+                        theme,
+                        label: 'EXTEND CYCLE',
+                        icon: Icons.add_circle_outline,
+                        backgroundColor: theme.colorScheme.primary,
+                        borderColor: theme.colorScheme.primary.withValues(alpha: 0.5),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          onExtendTime();
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-
-                  child: _buildControlButton(
-                    context,
-                    theme,
-                    label: 'Extend',
-                    icon: 'add_circle_outline',
-                    backgroundColor: theme.colorScheme.primary,
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      onExtendTime();
-                    },
-                  ),
-                ),
+                const SizedBox(height: 12),
+                _buildControlButton(
+                  context,
+                  theme,
+                  label: 'TERMINATE SESSION',
+                  icon: Icons.stop_circle_outlined,
+                  backgroundColor: theme.colorScheme.error,
+                  borderColor: theme.colorScheme.error.withValues(alpha: 0.5),
+                  onPressed: () {
+                    HapticFeedback.heavyImpact();
+                    _showEndSessionDialog(context);
+                  },
+                  isFullWidth: true,
+                ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+                 .shimmer(duration: 2500.ms, color: Colors.white.withValues(alpha: 0.2)),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildControlButton(
-
-              context,
-              theme,
-              label: 'End Session',
-              icon: 'stop_circle',
-              backgroundColor: theme.colorScheme.error,
-              onPressed: () {
-                HapticFeedback.heavyImpact();
-                _showEndSessionDialog(context);
-              },
-              isFullWidth: true,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -97,38 +112,60 @@ class SessionControlPanelWidget extends StatelessWidget {
     BuildContext context,
     ThemeData theme, {
     required String label,
-    required String icon,
+    required IconData icon,
     required Color backgroundColor,
+    required Color borderColor,
     required VoidCallback onPressed,
     bool isFullWidth = false,
   }) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        minimumSize: Size(isFullWidth ? double.infinity : 100, 48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-
-        elevation: 2,
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: backgroundColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: borderColor,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: backgroundColor.withValues(alpha: 0.1),
+            blurRadius: 10,
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CustomIconWidget(iconName: icon, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Text(
-
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onPressed,
+          splashColor: backgroundColor.withValues(alpha: 0.3),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: backgroundColor, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: backgroundColor,
+                      fontWeight: FontWeight.w700,
+                      
+                      fontSize: 12,
+                      letterSpacing: 1.0,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
-
-        ],
+        ),
       ),
     );
   }
@@ -139,56 +176,90 @@ class SessionControlPanelWidget extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            CustomIconWidget(
-              iconName: 'warning',
-              color: theme.colorScheme.error,
-              size: 24,
+      barrierColor: theme.colorScheme.surface.withValues(alpha: 0.8),
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AlertDialog(
+          backgroundColor: theme.colorScheme.surface.withValues(alpha: 0.9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: theme.colorScheme.error.withValues(alpha: 0.5),
+              width: 1.5,
             ),
-            const SizedBox(width: 8),
-            Text(
-
-              'End Session?',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: theme.colorScheme.error,
+                size: 28,
+              ).animate(onPlay: (controller) => controller.repeat(reverse: true)).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 500.ms),
+              const SizedBox(width: 12),
+              Text(
+                'SYSTEM OVERRIDE',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  
+                  color: theme.colorScheme.error,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'WARNING: Terminating this session will finalize all captured data. This action is irreversible.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontFamily: 'Space Grotesk',
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'ABORT',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.error.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  onEndSession();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                child: Text(
+                  'CONFIRM TERMINATION',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    
+                    letterSpacing: 1.0,
+                  ),
+                ),
               ),
             ),
           ],
         ),
-        content: Text(
-          'Are you sure you want to end this attendance session? This action cannot be undone.',
-          style: theme.textTheme.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onEndSession();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(
-              'End Session',
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

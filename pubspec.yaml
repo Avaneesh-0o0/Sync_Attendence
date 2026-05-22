@@ -68,6 +68,8 @@ dependencies:
   path: ^1.9.1                 # Path manipulation
   flutter_ble_peripheral: ^2.0.1
   permission_handler: ^11.3.1
+  flutter_animate: ^4.5.0
+  animated_text_kit: ^4.2.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -77,7 +79,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/images/resizelogo.png"
+  image_path: "assets/images/ourlogo.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

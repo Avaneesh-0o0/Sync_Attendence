@@ -109,7 +109,6 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
       if (mounted) setState(() => _isSaving = false);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -127,238 +126,265 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadProfile,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: Column(
-                      children: [
-                        // ── Hero Card ──
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                theme.colorScheme.primary,
-                                theme.colorScheme.primary.withValues(alpha: 0.75),
+          : CyberGridBackground(
+              child: RefreshIndicator(
+                onRefresh: _loadProfile,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: Column(
+                        children: [
+                          // ── Hero Card ──
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  theme.colorScheme.surface,
+                                  Color.lerp(theme.colorScheme.surface, theme.colorScheme.primary, 0.08)!,
+                                ],
+                              ),
+                              border: Border.all(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                                  blurRadius: 20,
+                                  spreadRadius: -2,
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                  offset: const Offset(0, 4),
+                                ),
                               ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Column(
-                            children: [
-                              ProfileAvatarWidget(
-                                initialImageUrl: _userProfile?.avatarUrl,
-                                radius: 50,
-                                onUploadComplete: (url) {
-                                  setState(() {
-                                    _userProfile = UserModel(
-                                      id: _userProfile!.id,
-                                      email: _userProfile!.email,
-                                      role: _userProfile!.role,
-                                      name: _userProfile!.name,
-                                      avatarUrl: url,
-                                      createdAt: _userProfile!.createdAt,
-                                    );
-                                  });
-                                },
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                _userProfile?.name ?? 'Teacher',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                user?.email ?? '',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  'TEACHER',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 1.2,
+                            child: Column(
+                              children: [
+                                ProfileAvatarWidget(
+                                  initialImageUrl: _userProfile?.avatarUrl,
+                                  radius: 50,
+                                  onUploadComplete: (url) {
+                                    setState(() {
+                                      _userProfile = UserModel(
+                                        id: _userProfile!.id,
+                                        email: _userProfile!.email,
+                                        role: _userProfile!.role,
+                                        name: _userProfile!.name,
+                                        avatarUrl: url,
+                                        createdAt: _userProfile!.createdAt,
+                                      );
+                                    });
+                                  },
+                                ).animate().scale(delay: 200.ms, duration: 500.ms, curve: Curves.easeOutBack),
+                                const SizedBox(height: 18),
+                                Text(
+                                  _userProfile?.name ?? 'Teacher',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    color: theme.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?.email ?? '',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'TEACHER',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ).animate().fadeIn(duration: 600.ms, curve: Curves.easeOutCubic).slideY(begin: 0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic),
+
+                          const SizedBox(height: 20),
+
+                          // ── Statistics Row ──
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatCard(
+                                  theme,
+                                  icon: Icons.class_outlined,
+                                  label: 'Classes',
+                                  value: '$_totalClasses',
+                                  color: theme.colorScheme.primary,
+                                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildStatCard(
+                                  theme,
+                                  icon: Icons.history,
+                                  label: 'Sessions',
+                                  value: '$_totalSessions',
+                                  color: theme.colorScheme.secondary,
+                                ).animate().fadeIn(delay: 300.ms, duration: 400.ms).scale(delay: 300.ms, duration: 400.ms, curve: Curves.easeOutBack),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildStatCard(
+                                  theme,
+                                  icon: Icons.calendar_month,
+                                  label: 'Joined',
+                                  value: joinStr,
+                                  color: theme.colorScheme.tertiary,
+                                ).animate().fadeIn(delay: 400.ms, duration: 400.ms).scale(delay: 400.ms, duration: 400.ms, curve: Curves.easeOutBack),
                               ),
                             ],
                           ),
-                        ),
 
-                        const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
-                        // ── Statistics Row ──
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                theme,
-                                icon: Icons.class_outlined,
-                                label: 'Classes',
-                                value: '$_totalClasses',
-                                color: theme.colorScheme.primary,
+                          // ── Personal Information Section ──
+                          _buildSectionHeader(theme, 'Personal Information', Icons.person_outline)
+                              .animate().fadeIn(delay: 450.ms, duration: 300.ms).slideX(begin: -0.05, end: 0, delay: 450.ms),
+                          const SizedBox(height: 12),
+                          _buildEditableField(
+                            theme,
+                            icon: Icons.person,
+                            label: 'Full Name',
+                            controller: _nameController,
+                          ).animate().fadeIn(delay: 500.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 500.ms),
+                          const SizedBox(height: 12),
+                          _buildEditableField(
+                            theme,
+                            icon: Icons.school,
+                            label: 'Department',
+                            controller: _departmentController,
+                            hint: 'e.g. Computer Science',
+                          ).animate().fadeIn(delay: 550.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 550.ms),
+                          const SizedBox(height: 12),
+                          _buildEditableField(
+                            theme,
+                            icon: Icons.phone,
+                            label: 'Phone Number',
+                            controller: _phoneController,
+                            hint: 'e.g. +91 98765 43210',
+                            keyboardType: TextInputType.phone,
+                          ).animate().fadeIn(delay: 600.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 600.ms),
+                          const SizedBox(height: 12),
+                          _buildEditableField(
+                            theme,
+                            icon: Icons.location_on_outlined,
+                            label: 'Office / Cabin',
+                            controller: _officeController,
+                            hint: 'e.g. Room 305, Block A',
+                          ).animate().fadeIn(delay: 650.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 650.ms),
+
+                          const SizedBox(height: 24),
+
+                          // ── Account Information Section ──
+                          _buildSectionHeader(theme, 'Account Information', Icons.info_outline)
+                              .animate().fadeIn(delay: 700.ms, duration: 300.ms).slideX(begin: -0.05, end: 0, delay: 700.ms),
+                          const SizedBox(height: 12),
+                          _buildReadOnlyField(
+                            theme,
+                            icon: Icons.email_outlined,
+                            label: 'Email Address',
+                            value: user?.email ?? 'N/A',
+                          ).animate().fadeIn(delay: 750.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 750.ms),
+                          const SizedBox(height: 12),
+                          _buildReadOnlyField(
+                            theme,
+                            icon: Icons.badge_outlined,
+                            label: 'Role',
+                            value: _userProfile?.role.toUpperCase() ?? 'TEACHER',
+                          ).animate().fadeIn(delay: 800.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 800.ms),
+                          const SizedBox(height: 12),
+                          _buildReadOnlyField(
+                            theme,
+                            icon: Icons.fingerprint,
+                            label: 'User ID',
+                            value: _userProfile?.id.substring(0, 8) ?? 'N/A',
+                          ).animate().fadeIn(delay: 850.ms, duration: 400.ms).slideY(begin: 0.1, end: 0, delay: 850.ms),
+
+                          const SizedBox(height: 28),
+
+                          // ── Save Button ──
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _isSaving ? null : _handleSaveProfile,
+                              icon: _isSaving
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Icon(Icons.save_outlined),
+                              label: Text(_isSaving ? 'Saving...' : 'Save Profile'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildStatCard(
-                                theme,
-                                icon: Icons.history,
-                                label: 'Sessions',
-                                value: '$_totalSessions',
-                                color: theme.colorScheme.secondary,
+                          ).animate().fadeIn(delay: 900.ms, duration: 400.ms).slideY(begin: 0.15, end: 0, delay: 900.ms),
+
+                          const SizedBox(height: 48),
+
+                          // ── Logout Button ──
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                await _authService.signOut();
+                                if (context.mounted) {
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    AppRoutes.login,
+                                    (route) => false,
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.logout),
+                              label: const Text('Logout'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.errorContainer,
+                                foregroundColor: theme.colorScheme.error,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildStatCard(
-                                theme,
-                                icon: Icons.calendar_month,
-                                label: 'Joined',
-                                value: joinStr,
-                                color: theme.colorScheme.tertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // ── Personal Information Section ──
-                        _buildSectionHeader(theme, 'Personal Information', Icons.person_outline),
-                        const SizedBox(height: 12),
-                        _buildEditableField(
-                          theme,
-                          icon: Icons.person,
-                          label: 'Full Name',
-                          controller: _nameController,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildEditableField(
-                          theme,
-                          icon: Icons.school,
-                          label: 'Department',
-                          controller: _departmentController,
-                          hint: 'e.g. Computer Science',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildEditableField(
-                          theme,
-                          icon: Icons.phone,
-                          label: 'Phone Number',
-                          controller: _phoneController,
-                          hint: 'e.g. +91 98765 43210',
-                          keyboardType: TextInputType.phone,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildEditableField(
-                          theme,
-                          icon: Icons.location_on_outlined,
-                          label: 'Office / Cabin',
-                          controller: _officeController,
-                          hint: 'e.g. Room 305, Block A',
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // ── Account Information Section ──
-                        _buildSectionHeader(theme, 'Account Information', Icons.info_outline),
-                        const SizedBox(height: 12),
-                        _buildReadOnlyField(
-                          theme,
-                          icon: Icons.email_outlined,
-                          label: 'Email Address',
-                          value: user?.email ?? 'N/A',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildReadOnlyField(
-                          theme,
-                          icon: Icons.badge_outlined,
-                          label: 'Role',
-                          value: _userProfile?.role.toUpperCase() ?? 'TEACHER',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildReadOnlyField(
-                          theme,
-                          icon: Icons.fingerprint,
-                          label: 'User ID',
-                          value: _userProfile?.id.substring(0, 8) ?? 'N/A',
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        // ── Save Button ──
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _isSaving ? null : _handleSaveProfile,
-                            icon: _isSaving
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Icon(Icons.save_outlined),
-                            label: Text(_isSaving ? 'Saving...' : 'Save Profile'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 48),
-
-                        // ── Logout Button ──
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              await _authService.signOut();
-                              if (context.mounted) {
-                                Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  AppRoutes.login,
-                                  (route) => false,
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.logout),
-                            label: const Text('Logout'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.errorContainer,
-                              foregroundColor: theme.colorScheme.error,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
+                          ).animate().fadeIn(delay: 950.ms, duration: 400.ms).slideY(begin: 0.2, end: 0, delay: 950.ms),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -404,9 +430,16 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.03),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Column(
         children: [

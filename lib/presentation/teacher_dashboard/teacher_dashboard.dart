@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/app_export.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -10,11 +11,9 @@ import './widgets/recent_activity_item_widget.dart';
 import '../../services/notification_service.dart';
 import '../../services/profile_service.dart';
 import '../../data/models/notification_model.dart';
-import 'package:intl/intl.dart';
 
 /// Teacher Dashboard Screen
-/// Provides comprehensive attendance management optimized for tablet interfaces
-/// with large touch targets and clear information hierarchy
+/// Overhauled to implement Minimal Cyberpunk UI, glassmorphic subject drawers, and telemetry readouts.
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
 
@@ -32,9 +31,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   Map<String, List<Map<String, dynamic>>> _groupedClasses = {};
   List<Map<String, dynamic>> _recentActivity = [];
 
-  // TODO: Fetch real profile
   final Map<String, dynamic> teacherProfile = {
-    "name": "Teacher", // Placeholder until profile table integrated
+    "name": "Teacher",
     "department": "Department",
     "avatar": "",
     "semanticLabel": "Teacher Profile",
@@ -67,23 +65,17 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             teacherProfile["department"] = profile.department ?? "Department";
           }
 
-          // Update profile stats
           teacherProfile["totalClasses"] = grouped.keys.length;
           teacherProfile["activeSessions"] = recent
-              .where((s) => s['status'] == 'active')
+              .where((s) => s['status'] == 'active' || s['is_active'] == true)
               .length;
 
           _isRefreshing = false;
         });
       }
     } catch (e) {
-      // Handle error, e.g., show a snackbar
+      print('DASHBOARD_ERROR: $e');
     }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   Future<void> _handleRefresh() async {
@@ -107,7 +99,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     Navigator.pushNamed(context, '/reports-screen', arguments: subject);
   }
 
-
   void _handleNewSession() {
     Navigator.pushNamed(context, '/start-attendance-screen');
   }
@@ -121,134 +112,170 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Notifications',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      _notificationService.markAllAsRead();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Mark all as read'),
-                  ),
-                ],
-              ),
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(
+              color: colorScheme.primary.withOpacity(0.2),
+              width: 1.5,
             ),
-            const Divider(),
-            Expanded(
-              child: StreamBuilder<List<NotificationModel>>(
-                stream: _notificationService.getNotificationStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  
-                  final notifications = snapshot.data ?? [];
-                  
-                  if (notifications.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.notifications_none_outlined,
-                            size: 64,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'NOTIFICATIONS',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                            color: colorScheme.primary,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No notifications yet',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                        ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        _notificationService.markAllAsRead();
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'MARK ALL READ',
+                        style: TextStyle(
+                          
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.secondary,
+                        ),
                       ),
-                    );
-                  }
-
-                  return ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: notifications.length,
-                    separatorBuilder: (context, index) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final n = notifications[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: n.isRead 
-                              ? Theme.of(context).colorScheme.surfaceContainerHighest
-                              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          child: Icon(
-                            _getIconForType(n.type),
-                            color: n.isRead 
-                                ? Theme.of(context).colorScheme.onSurfaceVariant
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                        title: Text(
-                          n.title,
-                          style: TextStyle(
-                            fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              Expanded(
+                child: StreamBuilder<List<NotificationModel>>(
+                  stream: _notificationService.getNotificationStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    
+                    final notifications = snapshot.data ?? [];
+                    
+                    if (notifications.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(n.message),
-                            const SizedBox(height: 4),
+                            Icon(
+                              Icons.notifications_off_outlined,
+                              size: 48,
+                              color: colorScheme.onSurface.withOpacity(0.3),
+                            ),
+                            const SizedBox(height: 16),
                             Text(
-                              _formatTimestamp(n.createdAt),
-                              style: Theme.of(context).textTheme.bodySmall,
+                              'ALL NETWORKS QUIET',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurface.withOpacity(0.4),
+                                    
+                                    letterSpacing: 1.0,
+                                  ),
                             ),
                           ],
                         ),
-                        onTap: () {
-                          if (!n.isRead) _notificationService.markAsRead(n.id);
-                        },
                       );
-                    },
-                  );
-                },
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: notifications.length,
+                      separatorBuilder: (context, index) => Divider(
+                        color: colorScheme.primary.withOpacity(0.1),
+                      ),
+                      itemBuilder: (context, index) {
+                        final n = notifications[index];
+                        final highlightColor = n.isRead
+                            ? colorScheme.onSurface.withOpacity(0.4)
+                            : colorScheme.primary;
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: n.isRead 
+                                ? colorScheme.surface
+                                : colorScheme.primary.withOpacity(0.08),
+                            child: Icon(
+                              _getIconForType(n.type),
+                              color: highlightColor,
+                              size: 18,
+                            ),
+                          ),
+                          title: Text(
+                            n.title,
+                            style: TextStyle(
+                              
+                              fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold,
+                              color: n.isRead ? colorScheme.onSurface.withOpacity(0.7) : Colors.white,
+                            ),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                n.message,
+                                style: TextStyle(
+                                  
+                                  color: colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _formatTimestamp(n.createdAt),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onSurface.withOpacity(0.4),
+                                      
+                                      fontSize: 9,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            if (!n.isRead) _notificationService.markAsRead(n.id);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   IconData _getIconForType(String type) {
     switch (type) {
       case 'session_start':
-        return Icons.play_circle_outline;
+        return Icons.rocket_launch_outlined;
       case 'attendance_alert':
         return Icons.warning_amber_rounded;
       default:
-        return Icons.notifications_outlined;
+        return Icons.notifications_none_outlined;
     }
   }
 
   String _formatTimestamp(DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}M AGO';
+    if (diff.inHours < 24) return '${diff.inHours}H AGO';
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
@@ -256,7 +283,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     if (timestamp == null) return 'N/A';
     try {
       final dt = DateTime.parse(timestamp.toString());
-      return DateFormat('dd MMM yyyy').format(dt);
+      return DateFormat('dd MMM yyyy').format(dt).toUpperCase();
     } catch (_) {
       return 'N/A';
     }
@@ -266,25 +293,26 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     if (timestamp == null) return 'N/A';
     try {
       final dt = DateTime.parse(timestamp.toString());
-      return DateFormat('hh:mm a').format(dt);
+      return DateFormat('hh:mm a').format(dt).toUpperCase();
     } catch (_) {
       return 'N/A';
     }
   }
 
   void _handleSettings() {
-    // Navigate to settings screen (not implemented in this scope)
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Settings feature coming soon'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(
+          'SETTINGS DIRECTORY LINKING IN PROGRESS',
+          style: TextStyle( color: Theme.of(context).colorScheme.primary),
+        ),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
 
-
   Future<void> _showAddClassDialog() async {
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
     final subjectCodeController = TextEditingController();
     final nameController = TextEditingController();
     final totalStudentsController = TextEditingController(text: '50');
@@ -292,33 +320,36 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add New Class'),
+        title: Text(
+          'NEW CLASS DIRECTORY',
+          style: TextStyle(color: colorScheme.primary,  fontSize: 16),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
+              style: const TextStyle(),
               decoration: const InputDecoration(
-                labelText: 'Class Name (e.g. CS1)',
-                border: OutlineInputBorder(),
+                labelText: 'Class Identifier (e.g. CS-A)',
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: subjectCodeController,
+              style: const TextStyle(),
+              decoration: const InputDecoration(
+                labelText: 'Subject Name (e.g. Cryptography)',
               ),
               textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: subjectCodeController,
-              decoration: const InputDecoration(
-                labelText: 'Subject (e.g. Algorithms)',
-                border: OutlineInputBorder(),
-              ),
-              textCapitalization: TextCapitalization.sentences,
-            ),
-             const SizedBox(height: 16),
-            TextField(
               controller: totalStudentsController,
+              style: const TextStyle(),
               decoration: const InputDecoration(
-                labelText: 'Total Students',
-                border: OutlineInputBorder(),
+                labelText: 'Max Headcount',
               ),
               keyboardType: TextInputType.number,
             ),
@@ -327,15 +358,17 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'ABORT',
+              style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), ),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
               if (nameController.text.isNotEmpty && subjectCodeController.text.isNotEmpty) {
-                 Navigator.pop(context); // Close dialog
-                 // Show loading
+                 Navigator.pop(context);
                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Adding class...')),
+                    const SnackBar(content: Text('LINKING CLOUD CLASS SYSTEM...')),
                  );
 
                  final int? total = int.tryParse(totalStudentsController.text);
@@ -346,17 +379,16 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                    totalStudents: total ?? 50,
                  );
 
-                 // Refresh dashboard
                  await _loadDashboardData();
                  
                  if (mounted) {
                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Class added successfully!')),
+                      const SnackBar(content: Text('CLASS SUCCESSFULLY RECORDED.')),
                    );
                  }
               }
             },
-            child: const Text('Add Class'),
+            child: const Text('LINK CLASS'),
           ),
         ],
       ),
@@ -366,6 +398,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -375,7 +408,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           builder: (context, snapshot) {
             final unreadCount = snapshot.data?.where((n) => !n.isRead).length ?? 0;
             return CustomAppBar.teacherDashboard(
-              title: 'Teacher Dashboard',
+              title: 'TEACHER HUB',
               onNotificationPressed: _handleNotifications,
               onSettingsPressed: _handleSettings,
               notificationCount: unreadCount,
@@ -383,30 +416,60 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           },
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _handleRefresh,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: _buildDashboardTab(theme),
+      body: CyberGridBackground(
+        child: RefreshIndicator(
+          color: colorScheme.primary,
+          backgroundColor: colorScheme.surface,
+          onRefresh: _handleRefresh,
+          child: Responsive(
+            mobile: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: _buildDashboardTab(theme),
+              ),
+            ),
+            tablet: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: _buildDashboardTab(theme),
+              ),
+            ),
+            desktop: Row(
+              children: [
+                DesktopSidebar(
+                  currentIndex: _currentBottomNavIndex,
+                  onIndexChanged: _handleBottomNavTap,
+                  role: 'teacher',
+                ),
+                Expanded(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1200),
+                      child: _buildDashboardTab(theme),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: Responsive.isDesktop(context) ? null : FloatingActionButton.extended(
         onPressed: _handleNewSession,
-        icon: CustomIconWidget(
-          iconName: 'add',
-          color: theme.colorScheme.onSecondary,
-          size: 24,
-        ),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        icon: const Icon(Icons.add_box_outlined, size: 20),
         label: Text(
-          'New Session',
+          'NEW RUNTIME',
           style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onSecondary,
+            color: colorScheme.onPrimary,
+            
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
           ),
         ),
-      ),
-      bottomNavigationBar: CustomBottomBar.teacher(
+      ).animate().scale(delay: 400.ms, duration: 300.ms, curve: Curves.bounceOut),
+      bottomNavigationBar: Responsive.isDesktop(context) ? null : CustomBottomBar.teacher(
         currentIndex: _currentBottomNavIndex,
         onTap: _handleBottomNavTap,
         activeSessionCount: teacherProfile["activeSessions"] as int?,
@@ -415,6 +478,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   }
 
   Widget _buildDashboardTab(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Padding(
@@ -426,171 +491,267 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             ProfileOverviewCardWidget(teacherProfile: teacherProfile),
             SizedBox(height: 3.h),
 
-            // Classes & Subjects Section
+            // Classes & Subjects Section Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'My Classes',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  'LINKED SYSTEMS',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    
+                    letterSpacing: 1.5,
+                    color: Colors.white,
                   ),
                 ),
                 TextButton.icon(
                   onPressed: _showAddClassDialog,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Class'),
+                  icon: Icon(Icons.add_link_outlined, size: 16, color: colorScheme.primary),
+                  label: Text(
+                    'ADD CLASS',
+                    style: TextStyle(
+                      
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      color: colorScheme.primary,
+                    ),
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: 1.h),
 
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _groupedClasses.keys.length,
-              itemBuilder: (context, index) {
-                final className = _groupedClasses.keys.elementAt(index);
-                final subjects = _groupedClasses[className]!;
-                
-                return Card(
-                  margin: EdgeInsets.only(bottom: 2.h),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+            // Grouped Classes Accordion
+            if (_groupedClasses.isEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colorScheme.primary.withOpacity(0.1),
                   ),
-                  child: ExpansionTile(
-                    title: Text(
-                      className,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                ),
+                child: Center(
+                  child: Text(
+                    'NO CLASSES DEPLOYED YET',
+                    style: TextStyle(
+                      
+                      color: colorScheme.onSurface.withOpacity(0.4),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ).animate().fadeIn(duration: 450.ms),
+            ] else ...[
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: _groupedClasses.keys.map((className) {
+                  final index = _groupedClasses.keys.toList().indexOf(className);
+                  final subjects = _groupedClasses[className]!;
+                  final isDesktop = Responsive.isDesktop(context);
+                  
+                  return Container(
+                    width: isDesktop ? 450 : double.infinity,
+                    margin: isDesktop ? EdgeInsets.zero : EdgeInsets.only(bottom: 1.5.h),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.15),
+                        width: 1.0,
                       ),
                     ),
-                    subtitle: Text('${subjects.length} Subjects'),
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.school, color: theme.colorScheme.primary),
-                    ),
-                    children: subjects.map((s) {
-                      return ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(Icons.book_outlined, size: 20, color: theme.colorScheme.primary),
-                        ),
+                    child: Theme(
+                      data: theme.copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        iconColor: colorScheme.primary,
+                        collapsedIconColor: colorScheme.onSurface.withOpacity(0.5),
                         title: Text(
-                          s['subject_code'] ?? 'No Subject',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ), 
-                        // name is the Class Name, already shown in header, so maybe no subtitle or different info
-                        subtitle: Text(s['semester'] ?? 'Current Semester'), 
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.bar_chart_rounded),
-                              tooltip: 'Reports',
-                              onPressed: () => _handleViewReports({
+                          className.toUpperCase(),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            
+                            color: Colors.white,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${subjects.length} REGISTRATION SYSTEM(S)',
+                          style: TextStyle(
+                            
+                            fontSize: 10,
+                            color: colorScheme.onSurface.withOpacity(0.5),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: colorScheme.primary.withOpacity(0.08),
+                          child: Icon(Icons.hub_outlined, color: colorScheme.primary, size: 18),
+                        ),
+                        children: [
+                          Divider(color: colorScheme.primary.withOpacity(0.1), height: 1),
+                          ...subjects.map((s) {
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                              leading: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: colorScheme.secondary.withOpacity(0.08),
+                                child: Icon(Icons.subtitles_outlined, size: 14, color: colorScheme.secondary),
+                              ),
+                              title: Text(
+                                (s['subject_code'] ?? 'No Subject').toString().toUpperCase(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  
+                                  fontSize: 13,
+                                  letterSpacing: 0.5,
+                                ),
+                              ), 
+                              subtitle: Text(
+                                (s['semester'] ?? 'CURRENT SEMESTER').toString().toUpperCase(),
+                                style: TextStyle(
+                                  
+                                  fontSize: 10,
+                                  color: colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                              ), 
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.analytics_outlined, color: colorScheme.primary, size: 18),
+                                    tooltip: 'Analytics Reports',
+                                    onPressed: () => _handleViewReports({
+                                      'id': s['id'],
+                                      'name': s['name'],
+                                      'subjectCode': s['subject_code'],
+                                    }),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.arrow_forward_ios, size: 12, color: colorScheme.onSurface.withOpacity(0.4)),
+                                ],
+                              ),
+                              onTap: () => _handleStartSession({
                                 'id': s['id'],
                                 'name': s['name'],
                                 'subjectCode': s['subject_code'],
                               }),
-                            ),
-                            Icon(Icons.arrow_forward_ios, size: 14, color: theme.colorScheme.onSurfaceVariant),
-                          ],
-                        ),
-                        onTap: () => _handleStartSession({
-                          'id': s['id'],
-                          'name': s['name'],
-                          'subjectCode': s['subject_code'],
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                );
-              },
-            ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: (index * 80).ms, duration: 400.ms).slideY(begin: 0.05, end: 0);
+                }).toList(),
+              ),
+            ],
             SizedBox(height: 3.h),
 
-            // Recent Activity Section
+            // Recent Activity Section Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Recent Activity',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  'RUNTIME JOURNAL',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    
+                    letterSpacing: 1.5,
+                    color: Colors.white,
                   ),
                 ),
                 TextButton(
-                  onPressed: () {
-                    // Navigate to full activity history
-                  },
+                  onPressed: () {},
                   child: Text(
-                    'View All',
+                    'VIEW ARCHIVES',
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.primary,
+                      color: colorScheme.secondary,
+                      
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: 1.h),
 
             // Recent Activity List
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _recentActivity.length,
-              separatorBuilder: (context, index) => SizedBox(height: 1.h),
-              itemBuilder: (context, index) {
-                final activity = _recentActivity[index];
-                final displayActivity = {
-                  "id": activity['id'],
-                  "subjectName": activity['classes']?['name'] ?? 'Subject',
-                  "subjectCode": activity['classes']?['subject_code'] ?? '',
-                  "status": activity['is_active'] == true ? "active" : "completed",
-                  "sessionDate": _formatDate(activity['start_time']),
-                  "sessionTime": _formatTime(activity['start_time']),
-                  "attendancePercentage": 0.0, // Default to 0.0 to avoid crash
-                  "attendanceCount": 0,
-                  "totalStudents": activity['classes']?['total_students'] ?? 0,
-                  "duration": "${activity['duration_minutes'] ?? 0} min",
-                };
+            if (_recentActivity.isEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: colorScheme.primary.withOpacity(0.1),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'JOURNAL EMPTY',
+                    style: TextStyle(
+                      
+                      color: colorScheme.onSurface.withOpacity(0.4),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ).animate().fadeIn(duration: 450.ms),
+            ] else ...[
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: _recentActivity.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final activity = entry.value;
+                  final isDesktop = Responsive.isDesktop(context);
+                  
+                  final displayActivity = {
+                    "id": activity['id'],
+                    "subjectName": activity['classes']?['name'] ?? 'Subject',
+                    "subjectCode": activity['classes']?['subject_code'] ?? '',
+                    "status": (activity['is_active'] == true) ? "active" : "completed",
+                    "sessionDate": _formatDate(activity['start_time']),
+                    "sessionTime": _formatTime(activity['start_time']),
+                    "attendancePercentage": 0.0,
+                    "attendanceCount": 0,
+                    "totalStudents": activity['classes']?['total_students'] ?? 0,
+                    "duration": "${activity['duration_minutes'] ?? 0} MIN",
+                  };
 
-                return RecentActivityItemWidget(
-                  activity: displayActivity,
-                  onTap: () {
-                    if (displayActivity["status"] == "active") {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.liveAttendance,
-                        arguments: {
-                          'sessionId': displayActivity['id'],
-                          'subjectName': displayActivity['subjectName'],
-                          'classId': activity['class_id'],
-                          'totalStudents': displayActivity['totalStudents'],
-                        },
-                      );
-                    }
-                  },
-                );
-              },
-            ),
+                  return Container(
+                    width: isDesktop ? 450 : double.infinity,
+                    child: RecentActivityItemWidget(
+                      activity: displayActivity,
+                      onTap: () {
+                        if (displayActivity["status"] == "active") {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.liveAttendance,
+                            arguments: {
+                              'sessionId': displayActivity['id'],
+                              'subjectName': displayActivity['subjectName'],
+                              'classId': activity['class_id'],
+                              'totalStudents': displayActivity['totalStudents'],
+                            },
+                          );
+                        }
+                      },
+                    ).animate().fadeIn(delay: (index * 80).ms, duration: 400.ms).slideY(begin: 0.05, end: 0),
+                  );
+                }).toList(),
+              ),
+            ],
             SizedBox(height: 10.h),
           ],
         ),
       ),
     );
   }
-
-
 }
