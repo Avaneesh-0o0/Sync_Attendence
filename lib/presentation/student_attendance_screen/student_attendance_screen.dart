@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/app_export.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -747,6 +748,26 @@ class _BleCheckDialogState extends State<_BleCheckDialog> {
     try {
       if (!(await FlutterBluePlus.isSupported)) {
         throw Exception('Bluetooth not supported on this device');
+      }
+
+      // Request runtime permissions (Android 12+)
+      if (Platform.isAndroid) {
+        final statuses = await [
+          Permission.bluetoothScan,
+          Permission.bluetoothConnect,
+          Permission.location,
+        ].request();
+
+        final denied = statuses.entries
+            .where((e) => !e.value.isGranted)
+            .map((e) => e.key.toString())
+            .toList();
+
+        if (denied.isNotEmpty) {
+          throw Exception(
+            'Bluetooth permissions required. Please grant: ${denied.join(", ")} in Settings.',
+          );
+        }
       }
 
       // Check adapter state with a timeout

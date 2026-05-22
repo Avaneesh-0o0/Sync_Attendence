@@ -1,4 +1,6 @@
 import 'dart:async' as async;
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -11,6 +13,8 @@ enum MarkAttendanceResult { successOnline, successOffline, failure }
 
 class StudentService {
   final SupabaseClient _supabase = SupabaseService.instance.client;
+  // Must match the secret used in live_attendance_screen.dart
+  static const String _qrSecret = 'attendix_secret_key_2026';
 
   // Stream to notify UI of sync status changes
   final _syncStatusController = async.StreamController<bool>.broadcast();
@@ -23,6 +27,61 @@ class StudentService {
         syncOfflineData();
       }
     });
+  }
+
+  /// Validate a QR token locally using the same algorithm the teacher uses.
+  /// Token format: ATTENDIX_QR:<sessionId>:<windowId>:<hash>
+  /// Returns true if the hash matches and the windowId is within ±1 of the
+  /// current 30-second window (to allow for minor clock skew / scan delay).
+  bool _validateQrTokenLocally(String token, String expectedSessionId) {
+    debugPrint('QR_VALIDATE: Validating token locally');
+    if (!token.startsWith('ATTENDIX_QR:')) return false;
+
+    final parts = token.split(':');
+    // Expected: ['ATTENDIX_QR', sessionId, windowId, hash]
+    if (parts.length < 4) {
+      debugPrint('QR_VALIDATE: Token has ${parts.length} parts, expected 4');
+      return false;
+    }
+
+    final tokenSessionId = parts[1];
+    final tokenWindowIdStr = parts[2];
+    final tokenHash = parts[3];
+
+    // Verify session ID matches
+    if (tokenSessionId != expectedSessionId) {
+      debugPrint('QR_VALIDATE: Session mismatch: token=$tokenSessionId expected=$expectedSessionId');
+      return false;
+    }
+
+    final tokenWindowId = int.tryParse(tokenWindowIdStr);
+    if (tokenWindowId == null) {
+      debugPrint('QR_VALIDATE: Invalid windowId: $tokenWindowIdStr');
+      return false;
+    }
+
+    // Check that the window ID is recent (current, previous, or next to handle skew)
+    const windowSize = 30;
+    final now = DateTime.now();
+    final currentWindowId = now.millisecondsSinceEpoch ~/ (windowSize * 1000);
+
+    if ((tokenWindowId - currentWindowId).abs() > 1) {
+      debugPrint('QR_VALIDATE: Window expired: token=$tokenWindowId current=$currentWindowId');
+      return false;
+    }
+
+    // Recompute hash and compare
+    final bytes = utf8.encode('$tokenSessionId$tokenWindowId$_qrSecret');
+    final digest = sha256.convert(bytes);
+    final expectedHash = digest.toString().substring(0, 8);
+
+    if (tokenHash != expectedHash) {
+      debugPrint('QR_VALIDATE: Hash mismatch: token=$tokenHash expected=$expectedHash');
+      return false;
+    }
+
+    debugPrint('QR_VALIDATE: ✅ Token is valid!');
+    return true;
   }
 
   /// Mark Attendance
@@ -55,50 +114,37 @@ class StudentService {
       (r) => r == ConnectivityResult.none,
     );
 
-    final bool requiresQrRpc = method == 'QR' || method == 'Hybrid';
+    final bool requiresQrValidation = method == 'QR' || method == 'Hybrid';
 
     if (isOffline) {
-      if (requiresQrRpc && token != null) {
-        // If offline and QR/Hybrid, we can't fully validate the hash here right now securely without duplicating the secret on client,
-        // so we'll store the token and validate it on sync.
+      if (requiresQrValidation && token != null) {
+        // Validate locally even when offline
+        if (!_validateQrTokenLocally(token, sessionId)) {
+          debugPrint('STUDENT_SERVICE: Offline QR validation failed');
+          return MarkAttendanceResult.failure;
+        }
         attendanceData['qr_token'] = token;
       }
       return await _saveOffline(attendanceData);
     }
 
     try {
-      if (requiresQrRpc) {
+      if (requiresQrValidation) {
         if (token == null) {
           return MarkAttendanceResult.failure; // QR/Hybrid mode requires token
         }
 
-        debugPrint('STUDENT_SERVICE: Calling mark_attendance_qr RPC');
-        debugPrint('STUDENT_SERVICE: p_session_id=$sessionId');
-        debugPrint('STUDENT_SERVICE: p_token=$token');
-        debugPrint('STUDENT_SERVICE: p_student_id=$userId');
-        debugPrint('STUDENT_SERVICE: p_method=$method');
-
-        final response = await _supabase.rpc(
-          'mark_attendance_qr',
-          params: {
-            'p_session_id': sessionId,
-            'p_token': token,
-            'p_student_id': userId,
-            'p_method': method,
-            'p_student_name': studentName,
-            'p_roll_number': rollNumber,
-            'p_synced': true,
-          },
-        );
-
-        final resultStr = response.toString().trim().toUpperCase();
-        debugPrint('STUDENT_SERVICE: RPC response = "$resultStr" (raw: $response)');
-        if (resultStr == 'SUCCESS') {
-          return MarkAttendanceResult.successOnline;
-        } else {
-          debugPrint('QR_VALIDATION_FAILED: $resultStr');
+        // Validate the QR token locally instead of relying on server RPC
+        if (!_validateQrTokenLocally(token, sessionId)) {
+          debugPrint('STUDENT_SERVICE: QR token validation failed');
           return MarkAttendanceResult.failure;
         }
+
+        debugPrint('STUDENT_SERVICE: QR token validated locally, inserting attendance');
+        // Token is valid — insert attendance directly
+        attendanceData['synced'] = true;
+        await _supabase.from('attendance').insert(attendanceData);
+        return MarkAttendanceResult.successOnline;
       } else {
         // Standard Insert for Bluetooth/Manual
         attendanceData['synced'] = true;
@@ -144,25 +190,13 @@ class StudentService {
         final syncData = {...data};
 
         try {
-          // If it was a QR code or Hybrid scan that happened offline
+          // QR tokens were already validated locally before being saved offline.
+          // Remove the qr_token field (not a DB column) and do a direct insert.
           if (syncData.containsKey('qr_token')) {
-            final token = syncData.remove('qr_token');
-            await _supabase.rpc(
-              'mark_attendance_qr',
-              params: {
-                'p_session_id': syncData['session_id'],
-                'p_token': token,
-                'p_student_id': syncData['student_id'],
-                'p_method': syncData['verification_method'],
-                'p_student_name': syncData['student_name'],
-                'p_roll_number': syncData['roll_number'],
-                'p_synced': true,
-              },
-            );
-          } else {
-            syncData['synced'] = true;
-            await _supabase.from('attendance').insert(syncData);
+            syncData.remove('qr_token');
           }
+          syncData['synced'] = true;
+          await _supabase.from('attendance').insert(syncData);
           keysToDelete.add(key);
         } catch (e) {
           print('SYNC_SERVICE: Failed to sync record $key: $e');

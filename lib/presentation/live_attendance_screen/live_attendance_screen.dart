@@ -14,6 +14,7 @@ import 'dart:convert';
 import 'dart:io'; // For Platform check
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter_blue_plus/flutter_blue_plus.dart'; // For Adapter State
+import 'package:permission_handler/permission_handler.dart';
 
 class LiveAttendanceScreen extends StatefulWidget {
   const LiveAttendanceScreen({super.key});
@@ -76,6 +77,36 @@ class _LiveAttendanceScreenState extends State<LiveAttendanceScreen>
     if (kIsWeb) {
       debugPrint("Bluetooth Advertising is not supported on Web.");
       return;
+    }
+
+    // 0. Request runtime permissions (Android 12+)
+    if (Platform.isAndroid) {
+      final statuses = await [
+        Permission.bluetoothAdvertise,
+        Permission.bluetoothConnect,
+        Permission.location,
+      ].request();
+
+      final denied = statuses.entries
+          .where((e) => !e.value.isGranted)
+          .map((e) => e.key.toString())
+          .toList();
+
+      if (denied.isNotEmpty) {
+        debugPrint('BLE_BROADCAST: Permissions denied: $denied');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Bluetooth permissions required: ${denied.join(", ")}'),
+              action: SnackBarAction(
+                label: 'Settings',
+                onPressed: openAppSettings,
+              ),
+            ),
+          );
+        }
+        return;
+      }
     }
 
     // 1. Ensure Bluetooth is ON
